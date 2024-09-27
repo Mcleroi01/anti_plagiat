@@ -46,7 +46,7 @@ class DocumentController extends Controller
         $resultIds = $plagiat->detect($document);
 
 
-        return redirect()->route('document.results', ['resultIds' => $resultIds]);
+        return redirect()->route('document.results', ['id' => $resultIds[0]]);
     }
 
 
@@ -66,6 +66,7 @@ class DocumentController extends Controller
 
     public function showResults(SearchResult $search)
     {
-        return view('document.results', compact('search'));
+        $searchResults = SearchResult::whereIn('id', $search)->get();
+        return view('documents.results', compact('searchResults'));
     }
 }

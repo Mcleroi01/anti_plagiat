@@ -129,7 +129,7 @@ class PlagiarismController extends Controller
 
             Log::info("Détection de plagiat terminée, similarité moyenne : " . $averageSimilarity . "%");
 
-            return $resultIds;
+            return $documentId;
         } catch (\Exception $e) {
             Log::error("Erreur lors de la détection de plagiat : " . $e->getMessage());
             return response()->json(['error' => 'Erreur de lecture du PDF : ' . $e->getMessage()], 500);
