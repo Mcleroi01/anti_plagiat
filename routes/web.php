@@ -19,7 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-Route::get('/plagiasme/{id}/results', [DocumentController::class, 'showResults'])->name('document.results');
+Route::get('/plagiasme/results', [DocumentController::class, 'showResults'])->name('document.results');
 Route::get('/documents/upload', [DocumentController::class, 'create'])->name('documents.create');
 Route::get('/documents/show', [DocumentController::class, 'show'])->name('documents.show');
 Route::get('/documents/index', [DocumentController::class, 'index'])->name('documents.index');

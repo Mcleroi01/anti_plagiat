@@ -43,10 +43,19 @@ class DocumentController extends Controller
 
         $plagiat = new PlagiarismController;
 
-        $resultIds = $plagiat->detect($document);
+        $result = $plagiat->detect($document);
 
 
-        return redirect()->route('document.results', ['id' => $resultIds[0]]);
+        $response = json_decode($result->getContent(), true);
+
+        // Accéder à 'average_similarity' et 'results'
+        $averageSimilarity = $response['average_similarity'];
+        $results = $response['results'];
+
+        // Redirection vers la vue 'documents.create' avec les résultats
+        return view('documents.create')
+            ->with('averageSimilarity', $averageSimilarity)
+            ->with('results', $results);
     }
 
 
@@ -57,16 +66,29 @@ class DocumentController extends Controller
         return view('documents.show', compact('document'));
     }
 
-    public function index (){
+    public function index()
+    {
         $documents = Document::all();
-        return view('documents.index',compact('documents'));
+        return view('documents.index', compact('documents'));
     }
 
 
 
-    public function showResults(SearchResult $search)
+    public function showResults(Request $request)
     {
-        $searchResults = SearchResult::whereIn('id', $search)->get();
+        // Récupérer les IDs depuis la requête
+        $resultIds = $request->input('id'); // Si vous passez un tableau d'IDs via la route
+
+        // Vérifiez si $resultIds est un tableau
+        if (is_array($resultIds)) {
+            // Récupérer les résultats correspondants
+            $searchResults = SearchResult::whereIn('id', $resultIds)->get();
+        } else {
+            // Si ce n'est pas un tableau, récupérez un seul résultat
+            $searchResults = SearchResult::where('id', $resultIds)->get();
+        }
+
+        // Passer les résultats à la vue
         return view('documents.results', compact('searchResults'));
     }
 }

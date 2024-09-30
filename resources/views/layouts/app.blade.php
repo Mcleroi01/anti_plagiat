@@ -11,7 +11,8 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css"  rel="stylesheet" />
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -256,24 +257,12 @@
         </div>
     </div>
 
-    <script>
-        var sideBar = document.getElementById("mobile-nav");
-        var openSidebar = document.getElementById("openSideBar");
-        var closeSidebar = document.getElementById("closeSideBar");
-        sideBar.style.transform = "translateX(-260px)";
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
 
-        function sidebarHandler(flag) {
-            if (flag) {
-                sideBar.style.transform = "translateX(0px)";
-                openSidebar.classList.add("hidden");
-                closeSidebar.classList.remove("hidden");
-            } else {
-                sideBar.style.transform = "translateX(-260px)";
-                closeSidebar.classList.add("hidden");
-                openSidebar.classList.remove("hidden");
-            }
-        }
-    </script>
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    @yield('script')
 </body>
 
 </html>
