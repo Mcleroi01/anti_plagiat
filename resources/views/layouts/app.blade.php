@@ -239,7 +239,7 @@
 
     <div class="">
         @include('layouts.navigation')
-        <div class="p-4 sm:ml-96 mt-10">
+        <div class="p-4 sm:ml-64 mt-20">
 
 
 
