@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Document;
 use App\Http\Requests\StoreDocumentRequest;
 use App\Http\Requests\UpdateDocumentRequest;
+use App\Models\Credit;
 use App\Models\SearchResult;
 use Illuminate\Http\Request;
 
@@ -20,43 +21,50 @@ class DocumentController extends Controller
     }
     public function upload(Request $request)
     {
-
+        // Validation des données
         $request->validate([
             'document' => 'required|mimes:pdf,doc,docx|max:2048',
         ]);
 
+        $user = auth()->user();
+        $credit = Credit::where('user_id', $user->id)->first();
 
+        // Vérifier si l'utilisateur a des crédits disponibles
+        if (!$credit || $credit->documents_uploaded >= $credit->monthly_limit) {
+            return redirect()->back()->with('error', 'Limite de documents atteinte pour ce mois.');
+        }
+
+        // Traiter le fichier téléchargé
         $file = $request->file('document');
-
-
         $fileName = time() . '_' . $file->getClientOriginalName();
-
-
         $filePath = $file->storeAs('documents', $fileName, 'public');
 
-
+        // Enregistrer le document dans la base de données
         $document = new Document();
         $document->filename = $file->getClientOriginalName();
         $document->path = $filePath;
         $document->save();
 
-
-        $plagiat = new PlagiarismController;
-
+        // Détection de plagiat
+        $plagiat = new PlagiarismController();
         $result = $plagiat->detect($document);
-
-
         $response = json_decode($result->getContent(), true);
 
-        // Accéder à 'average_similarity' et 'results'
         $averageSimilarity = $response['average_similarity'];
         $results = $response['results'];
+        $text = $response['text'];
 
-        // Redirection vers la vue 'documents.create' avec les résultats
+        // Incrémenter le compteur de documents uploadés
+        $credit->increment('documents_uploaded');
+
         return view('documents.create')
             ->with('averageSimilarity', $averageSimilarity)
-            ->with('results', $results);
+            ->with('results', $results)
+            ->with('text', $text)
+            ;
     }
+
+
 
 
 

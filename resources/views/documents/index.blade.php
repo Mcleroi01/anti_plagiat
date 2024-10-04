@@ -6,20 +6,26 @@
             <span class="block sm:inline">{{ $error }}</span>
         </div>
     @endif
-    <a href="{{ route('documents.upload') }}"
-        class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Dark</a>
+
 
     <div class="relative overflow-x-auto">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-200">
-            <thead class="text-xs text-gray-300 uppercase bg-gradient-to-br from-gray-800 to-gray-900 dark:text-gray-400">
+        <table class="w-full text-sm text-left rtl:text-right text-gray-200" id="table">
+            <thead
+                class="text-xs  uppercase bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
                 <tr>
                     <th scope="col" class="px-6 py-3">
                         Name
                     </th>
                     <th scope="col" class="px-6 py-3">
-                       Fichier
+                        Fichier
                     </th>
 
+                    <th scope="col" class="px-6 py-3">
+                        createdAt
+                    </th>
+                    <th scope="col" class="px-6 py-3">
+                        updatedAt
+                    </th>
                     <th scope="col" class="px-6 py-3">
                         Action
                     </th>
@@ -27,9 +33,8 @@
             </thead>
             <tbody>
                 @foreach ($documents as $item)
-                    <tr class="bg-gradient-to-br from-gray-800 to-gray-900 border-b  dark:border-gray-700">
-                        <th scope="row"
-                            class="px-6 py-4 font-medium  whitespace-nowrap text-white">
+                    <tr class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
+                        <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">
                             {{ $item->filename }}
                         </th>
                         <td class="px-6 py-4">
@@ -42,8 +47,8 @@
                             {{ $item->updatedAt }}
                         </td>
                         <td>
-                            <a class="sm:text-end  text-neutral-200"
-                                href="{{ asset('storage/' . $item->path) }}" target="_blank">View</a>
+                            <a class="sm:text-end  text-neutral-800 dark:text-neutral-200" href="{{ asset('storage/' . $item->path) }}"
+                                target="_blank">View</a>
 
 
                             <a class="sm:text-end text-neutral-200"
@@ -55,5 +60,20 @@
             </tbody>
         </table>
     </div>
+
+    @section('script')
+        <script>
+            $(document).ready(function() {
+                $('#table').DataTable({
+                    "scrollX": true,
+                    "fixedColumns": {
+                        "start": 3
+                    }
+                });
+
+                $('#candidatpresence').css('width', '100%');
+            });
+        </script>
+    @endsection
 
 </x-app-layout>

@@ -11,8 +11,9 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css"  rel="stylesheet" />
+    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
+    {{-- <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css"  rel="stylesheet" /> --}}
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.7/css/dataTables.dataTables.css">
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -233,7 +234,8 @@
     </style>
 </head>
 
-<body class=" bg-gray-900 ">
+<body class="transition-colors duration-300 bg-gray-200 dark:bg-gray-900">
+
 
     <div class="">
         @include('layouts.navigation')
@@ -256,12 +258,26 @@
             </main>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
-
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
         crossorigin="anonymous"></script>
+    {{-- <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script> --}}
+    <script src="https://cdn.datatables.net/2.1.7/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-appear/0.1/jquery.appear.js"
+        integrity="sha512-gmlF0Cjvx6n5XCLF9NNN+rZwS3X0Xn1vwuk+K0L3B4qve4UI+RVbNt0VynWadl//O0VQ8X47GH55KF9j3kVdUw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/circles/0.0.4/circles.min.js"
+        integrity="sha512-b1WwqOM9cYn7+FkAOcEoY+CfteslFr4lZOHjC1Alh75hM9f4sySAa0eO1YG7CoEwOV0j46vZ+aHXBSV64Kqw2g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script>
+        $(document).on('ready', function() {
+            // initialization of circles
+            $('.js-circle').each(function() {
+                var circle = $.HSCore.components.HSCircles.init($(this));
+            });
+        });
+    </script>
     @yield('script')
 </body>
 

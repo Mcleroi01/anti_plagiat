@@ -13,14 +13,15 @@ return new class extends Migration
     {
         Schema::create('search_results', function (Blueprint $table) {
             $table->id();
-            $table->text('search_phrase'); 
+            $table->text('search_phrase');
             $table->text('result_snippet');
             $table->float('similarity_calculated');
-            $table->string('result_link');
+            $table->string('result_link', 2048); // Modifier ici pour augmenter la taille
             $table->float('global_similarity_calculated');
             $table->foreignId('document_id')->constrained('documents')->onDelete('cascade');
             $table->timestamps();
         });
+
     }
 
     /**

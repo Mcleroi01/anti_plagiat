@@ -1,29 +1,58 @@
 <!-- component -->
 
 <aside
-    class="bg-gradient-to-br from-gray-800 to-gray-900 -translate-x-80 fixed inset-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 rounded-xl transition-transform duration-300 xl:translate-x-0">
+    class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800 -translate-x-80 fixed inset-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 rounded-xl transition-transform duration-300 xl:translate-x-0">
     <div class="relative border-b border-white/20">
-        <a class="flex items-center gap-4 py-6 px-8" href="#/">
-            <h6 class="block antialiased tracking-normal font-sans text-base font-semibold leading-relaxed text-white">
-                Plagiasme</h6>
-        </a>
-        <button
-            class="middle none font-sans font-medium text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none w-8 max-w-[32px] h-8 max-h-[32px] rounded-lg text-xs text-white hover:bg-white/10 active:bg-white/30 absolute right-0 top-0 grid rounded-br-none rounded-tl-none xl:hidden"
-            type="button">
-            <span class="absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
-                    stroke="currentColor" aria-hidden="true" class="h-5 w-5 text-white">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2 items-center">
+            <a class="flex items-center gap-4 py-6 px-8 dark:text-gray-200 text-gray-800" href="#/">
+                <h6
+                    class="block antialiased text-2xl tracking-normal font-sans  font-semibold leading-relaxed dark:text-gray-200 text-gray-800">
+                    JC<span class=" text-blue-400">Rify </span></p>
+                </h6>
+                <svg class="" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                        d="M7.111 20A3.111 3.111 0 0 1 4 16.889v-12C4 4.398 4.398 4 4.889 4h4.444a.89.89 0 0 1 .89.889v12A3.111 3.111 0 0 1 7.11 20Zm0 0h12a.889.889 0 0 0 .889-.889v-4.444a.889.889 0 0 0-.889-.89h-4.389a.889.889 0 0 0-.62.253l-3.767 3.665a.933.933 0 0 0-.146.185c-.868 1.433-1.581 1.858-3.078 2.12Zm0-3.556h.009m7.933-10.927 3.143 3.143a.889.889 0 0 1 0 1.257l-7.974 7.974v-8.8l3.574-3.574a.889.889 0 0 1 1.257 0Z" />
                 </svg>
-            </span>
+
+            </a>
+
+            <button onclick="(() => document.body.classList.toggle('dark'))()"
+                class="h-12 w-12 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700">
+
+                <!-- Soleil (mode clair) -->
+                <svg class="fill-violet-700 block dark:hidden transition-all duration-500 ease-in-out"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                </svg>
+
+                <!-- Lune (mode sombre) -->
+                <svg class="fill-yellow-500 hidden dark:block transition-all duration-500 ease-in-out"
+                    fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                        fill-rule="evenodd" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+
+        </div>
+        <button data-collapse-toggle="navbar-default" type="button"
+            class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+            aria-controls="navbar-default" aria-expanded="false">
+            <span class="sr-only">Open main menu</span>
+            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 17 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M1 1h15M1 7h15M1 13h15" />
+            </svg>
         </button>
     </div>
-    <div class="m-4">
+    <div class="m-4" id="navbar-default">
         <ul class="mb-4 flex flex-col gap-1">
             <li>
-                <a aria-current="page" class="active" href="{{route('dashboard')}}">
+                <a aria-current="page" class="active" href="{{ route('dashboard') }}">
                     <button
-                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg hover:bg-white/10 active:bg-white/30  active:opacity-[0.85] w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('dashboard') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 text-white' : 'text-white' }}"
+                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg hover:bg-white/10 active:bg-white/30  active:opacity-[0.85] w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('dashboard') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
                         type="button">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                             aria-hidden="true" class="w-5 h-5 text-inherit">
@@ -42,9 +71,9 @@
             </li>
 
             <li>
-                <a  href="{{route('documents.index')}}">
+                <a href="{{ route('documents.index') }}">
                     <button
-                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg text-white hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('documents.index') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 text-white' : 'text-white' }}"
+                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('documents.index') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
                         type="button">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                             aria-hidden="true" class="w-5 h-5 text-inherit">
@@ -60,9 +89,9 @@
             </li>
 
             <li>
-                <a class="" href="{{route('documents.create')}}">
+                <a class="" href="{{ route('documents.create') }}">
                     <button
-                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg text-white hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('documents.create') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 text-white' : 'text-white' }}"
+                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('documents.create') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
                         type="button">
                         <svg class="" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
                             height="24" fill="none" viewBox="0 0 24 24">
@@ -76,35 +105,75 @@
                     </button>
                 </a>
             </li>
-            <li>
-                <a class="" href="#">
-                    <button
-                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg text-white hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize"
-                        type="button">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                            aria-hidden="true" class="w-5 h-5 text-inherit">
-                            <path fill-rule="evenodd"
-                                d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 01-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 11-7.48 0 24.585 24.585 0 01-4.831-1.244.75.75 0 01-.298-1.205A8.217 8.217 0 005.25 9.75V9zm4.502 8.9a2.25 2.25 0 104.496 0 25.057 25.057 0 01-4.496 0z"
-                                clip-rule="evenodd"></path>
-                        </svg>
-                        <p
-                            class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
-                            notifactions</p>
-                    </button>
-                </a>
-            </li>
+            @if (Auth::user()->hasRole('super admin'))
+                <li>
+                    <a class="" href="{{ route('users.index') }}">
+                        <button
+                            class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('users.index') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
+                            type="button">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd"
+                                    d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+
+                            <p
+                                class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
+                                Users</p>
+                        </button>
+                    </a>
+                </li>
+                <li>
+                    <a class="" href="#">
+                        <button
+                            class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize"
+                            type="button">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                aria-hidden="true" class="w-5 h-5 text-inherit">
+                                <path fill-rule="evenodd"
+                                    d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 01-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 11-7.48 0 24.585 24.585 0 01-4.831-1.244.75.75 0 01-.298-1.205A8.217 8.217 0 005.25 9.75V9zm4.502 8.9a2.25 2.25 0 104.496 0 25.057 25.057 0 01-4.496 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <p
+                                class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
+                                notifactions</p>
+                        </button>
+                    </a>
+                </li>
+                <li>
+                    <a class="" href="{{ route('admin.roles-permissions') }}">
+                        <button
+                            class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('admin.roles-permissions') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
+                            type="button">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M10 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h2m10 1a3 3 0 0 1-3 3m3-3a3 3 0 0 0-3-3m3 3h1m-4 3a3 3 0 0 1-3-3m3 3v1m-3-4a3 3 0 0 1 3-3m-3 3h-1m4-3v-1m-2.121 1.879-.707-.707m5.656 5.656-.707-.707m-4.242 0-.707.707m5.656-5.656-.707.707M12 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+
+
+                            <p
+                                class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
+                                Settings</p>
+                        </button>
+                    </a>
+                </li>
+            @endif
+
         </ul>
         <ul class="mb-4 flex flex-col gap-1">
             <li class="mx-3.5 mt-4 mb-2">
                 <p
-                    class="block antialiased font-sans text-sm leading-normal text-white font-black uppercase opacity-75">
+                    class="block antialiased font-sans text-sm leading-normal dark:text-gray-200 text-gray-800 font-black uppercase opacity-75">
                     auth pages</p>
             </li>
 
             <li>
-                <a class="" href="#">
+                <a class="" href="{{ route('profile.edit') }}">
                     <button
-                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg text-white hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize"
+                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize"
                         type="button">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                             aria-hidden="true" class="w-5 h-5 text-inherit">
@@ -120,10 +189,13 @@
             </li>
 
             <li>
-                <a class="" href="#">
-                    <button
-                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg text-white hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize"
-                        type="button">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <a :href="route('logout')"
+                        class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize"
+                        onclick="event.preventDefault();
+                            this.closest('form').submit();">
+
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                             aria-hidden="true" class="w-5 h-5 text-inherit">
                             <path fill-rule="evenodd"
@@ -133,8 +205,11 @@
                         <p
                             class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
                             Sign Out</p>
-                    </button>
-                </a>
+
+
+                    </a>
+                </form>
+
             </li>
         </ul>
     </div>

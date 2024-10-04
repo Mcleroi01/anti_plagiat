@@ -63,7 +63,7 @@ class PlagiarismController extends Controller
                 $currentSegment[] = $word;
 
 
-                if (count($currentSegment) >= 100) {
+                if (count($currentSegment) >= 300) {
                     $segments[] = implode(' ', $currentSegment);
                     $currentSegment = []; // Reset for the next segment
                 }
@@ -141,13 +141,13 @@ class PlagiarismController extends Controller
 
             foreach ($resultsToStore as $result) {
                 $searchResult = SearchResult::create($result);
-                $resultIds[] = $searchResult->id;
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Détection de plagiat terminée',
                 'average_similarity' => $averageSimilarity,
+                'text' => $text,
                 'results' => $resultsToStore
             ]);
         } catch (\Exception $e) {
@@ -191,7 +191,7 @@ class PlagiarismController extends Controller
     {
         $client = new Client();
         $headers = [
-            'X-API-KEY' => 'f7f0f0f49c574a659436348e982705b2a90ea958',
+            'X-API-KEY' => '8b4d156e7b697db38cebed8eeb11d20256d3af1a',
             'Content-Type' => 'application/json',
 
         ];
@@ -221,7 +221,7 @@ class PlagiarismController extends Controller
 
 
 
-    private function calculateHybridSimilarity($text1, $text2)
+    private function calculateHybridSimilarity($text1, $text2, $n = 2) // Par défaut, n = 2 pour des bigrams
     {
         // Normaliser les textes
         $text1 = $this->normalizeText($text1);
@@ -240,67 +240,66 @@ class PlagiarismController extends Controller
             return $similarityPercentage; // Retourner la similarité élevée sans calculer Levenshtein
         }
 
-        // Diviser les textes en mots
-        $words1 = explode(' ', $text1);
-        $words2 = explode(' ', $text2);
+        // Générer les n-grams pour chaque texte
+        $nGrams1 = $this->nGrams($text1, $n);
+        $nGrams2 = $this->nGrams($text2, $n);
 
-        // Utiliser un ensemble pour les mots du deuxième texte pour améliorer la recherche
-        $wordSet = array_unique($words2);
+        // Utiliser un ensemble pour les n-grams du deuxième texte pour améliorer la recherche
+        $nGramSet = array_unique($nGrams2);
 
         $totalSimilarity = 0;
-        $wordCount = 0;
+        $nGramCount = 0;
 
-        foreach ($words1 as $input) {
+        foreach ($nGrams1 as $nGram) {
             $closest = null;
             $shortest = -1;
 
-            foreach ($wordSet as $word) {
-
-                $lev = levenshtein($input, $word);
+            foreach ($nGramSet as $nGramComp) {
+                $lev = levenshtein($nGram, $nGramComp);
 
                 // Cherche une correspondance exacte
                 if ($lev == 0) {
-                    $closest = $word;
+                    $closest = $nGramComp;
                     $shortest = 0;
                     break;
                 }
 
-
                 if ($lev <= $shortest || $shortest < 0) {
-                    $closest = $word;
+                    $closest = $nGramComp;
                     $shortest = $lev;
                 }
             }
 
-
+            // Calculer la similarité basée sur la distance Levenshtein
             if ($closest !== null) {
-                $inputLength = strlen($input);
+                $nGramLength = strlen($nGram);
                 $closestLength = strlen($closest);
 
-
-                if ($inputLength > 0 && $closestLength > 0) {
-                    $similarityLevenshtein = (1 - $shortest / max($inputLength, $closestLength)) * 100;
+                if ($nGramLength > 0 && $closestLength > 0) {
+                    $similarityLevenshtein = (1 - $shortest / max($nGramLength, $closestLength)) * 100;
                     $totalSimilarity += $similarityLevenshtein;
-                    $wordCount++;
+                    $nGramCount++;
                 }
             }
         }
 
-
-        return $wordCount > 0 ? $totalSimilarity / $wordCount : 0;
+        return $nGramCount > 0 ? $totalSimilarity / $nGramCount : 0;
     }
+
+    private function nGrams($text, $n)
+    {
+        $words = explode(' ', $text);
+        $nGrams = [];
+        for ($i = 0; $i <= count($words) - $n; $i++) {
+            $nGrams[] = implode(' ', array_slice($words, $i, $n));
+        }
+        return $nGrams;
+    }
+
 
 
     private function normalizeText($text)
     {
-
-        $text = strtolower($text);
-        $text = trim(preg_replace('/\s+/', ' ', $text));
-        $text = str_replace(
-            ['à', 'â', 'ä', 'á', 'ã', 'å', 'ç', 'é', 'è', 'ê', 'ë', 'í', 'î', 'ï', 'ñ', 'ó', 'ô', 'ö', 'õ', 'ú', 'û', 'ü', 'ý', 'ÿ'],
-            ['a', 'a', 'a', 'a', 'a', 'a', 'c', 'e', 'e', 'e', 'e', 'i', 'i', 'i', 'n', 'o', 'o', 'o', 'o', 'u', 'u', 'u', 'y', 'y'],
-            $text
-        );
 
         $text = preg_replace('/[^\w\s]/u', '', $text);
 
