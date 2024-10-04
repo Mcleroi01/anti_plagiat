@@ -59,4 +59,9 @@ class User extends Authenticatable
         return $this->hasOne(Credit::class);
     }
 
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
+    }
+
 }

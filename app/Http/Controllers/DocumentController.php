@@ -43,7 +43,10 @@ class DocumentController extends Controller
         $document = new Document();
         $document->filename = $file->getClientOriginalName();
         $document->path = $filePath;
+        $document->user_id = $user->id;
         $document->save();
+
+
 
         // Détection de plagiat
         $plagiat = new PlagiarismController();
@@ -61,7 +64,7 @@ class DocumentController extends Controller
             ->with('averageSimilarity', $averageSimilarity)
             ->with('results', $results)
             ->with('text', $text)
-            ;
+        ;
     }
 
 
@@ -76,9 +79,16 @@ class DocumentController extends Controller
 
     public function index()
     {
-        $documents = Document::all();
+        // Récupérer l'utilisateur actuellement connecté
+        $user = auth()->user();
+
+        // Récupérer les documents appartenant à cet utilisateur
+        $documents = Document::where('user_id', $user->id)->get();
+
         return view('documents.index', compact('documents'));
     }
+
+
 
 
 

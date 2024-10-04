@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->text('segment');
             $table->float('similarity');
-            $table->string('url');  
-            $table->foreignId('document_id')->constrained('documents')->onDelete('cascade');
+            $table->string('url');
+            $table->foreignId('document_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

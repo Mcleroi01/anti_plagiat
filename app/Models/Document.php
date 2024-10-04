@@ -9,10 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Document extends Model
 {
     use HasFactory;
-    protected $fillable = ['filename', 'path','email'];
+    protected $fillable = ['filename', 'path','email','user_id'];
 
     public function searchresult():HasMany
     {
         return $this->hasMany(SearchResult::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

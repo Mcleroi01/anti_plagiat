@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->string('filename'); // Le nom du fichier
-            $table->string('path'); // Chemin du fichier
-            $table->string('email')->nullable(); // Email de la personne ayant soumis le document
+            $table->string('filename');
+            $table->string('path');
+            $table->string('email')->nullable();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

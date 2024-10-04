@@ -114,29 +114,7 @@
         <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="dashboard" role="tabpanel"
             aria-labelledby="dashboard-tab">
             @if (isset($averageSimilarity))
-                <div class="grid grid-cols-1 md:grid-cols-3 sm:grid-cols-2 gap-10">
-                    <div class="rounded overflow-hidden shadow-lg">
-
-
-                        <div class="">
-
-                            <div class=" bg-white p-4">
-                                <h1>Score humain</h1>
-                            </div>
-
-                        </div>
-                        <div class="px-6 py-4 flex flex-row items-center">
-                            <p class="text-gray-200 text-sm">
-                                Pas de score IA disponible. Veuillez retourner à l'onglet de numérisation, basculer sur
-                                "IA"
-                                et scanner à nouveau pour obtenir vos résultats. Lors du scan d'IA, chaque mot compte
-                                pour 1
-                                crédit.
-                            </p>
-                        </div>
-
-                    </div>
-
+                <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-10 mb-4">
 
                     <div class="rounded overflow-hidden shadow-lg">
 
@@ -151,37 +129,13 @@
 
                         </div>
                         <div class="px-6 py-4 flex flex-row items-center">
-                            <p class="text-gray-200 text-sm">
+                            <p class="dark:text-gray-200 text-gray-800 text-sm">
                                 Winston a détecté le texte comme étant {{ $averageSimilarity }} % plagié. Veuillez
                                 consulter la liste complète des cas de plagiat ci-dessous.
                             </p>
                         </div>
 
                     </div>
-
-
-                    <div class="rounded overflow-hidden shadow-lg">
-
-
-                        <div class="">
-
-                            <div class=" bg-white p-4">
-                                <h1>Score humain</h1>
-                            </div>
-
-                        </div>
-                        <div class="px-6 py-4 flex flex-row items-center">
-                            <p class="text-gray-200 text-sm">
-                                Pas de score IA disponible. Veuillez retourner à l'onglet de numérisation, basculer sur
-                                "IA"
-                                et scanner à nouveau pour obtenir vos résultats. Lors du scan d'IA, chaque mot compte
-                                pour 1
-                                crédit.
-                            </p>
-                        </div>
-
-                    </div>
-
                 </div>
 
                 <script>
@@ -273,91 +227,60 @@
                     });
                 </script>
             @else
-                <p class="text-gray-400">Aucun segment pertinent trouvé.</p>
+                <p class="dark:text-gray-200 text-gray-800">Aucun segment pertinent trouvé.</p>
             @endif
 
-            <div class="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-2 gap-10 items-center">
-                @if (!empty($results))
+            <div
+                class="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-2 gap-10 items-center dark:text-gray-200 text-gray-800">
+                @if (!empty($text))
                     <div>
-                        <h1 class="block mb-2 text-xl font-semibold text-white">Votre texte soumis</h1>
+                        <h1 class="block mb-2 text-xl font-semibold dark:text-gray-200 text-gray-800">Votre texte
+                            soumis</h1>
                         <div
-                            class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-md">
-                            <p></p>
+                            class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-md p-4">
+                            <p> {{ substr($text, 0, 1000) }} ...</p>
                         </div>
                     </div>
                 @endif
                 @if (!empty($results))
-
-                    <div
-                        class="p-6 overflow-x-scroll px-0 pt-0 pb-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-md">
-                        <table class="w-full min-w-[640px] table-auto">
-                            <thead>
-                                <tr>
-                                    <th class="border-b border-blue-gray-50 py-3 px-6 text-left">
-                                        <p
-                                            class="block antialiased font-sans text-[11px] font-medium uppercase text-blue-gray-400">
-                                            companies</p>
-                                    </th>
-                                    <th class="border-b border-blue-gray-50 py-3 px-6 text-left">
-                                        <p
-                                            class="block antialiased font-sans text-[11px] font-medium uppercase text-blue-gray-400">
-                                            budget</p>
-                                    </th>
-                                    <th class="border-b border-blue-gray-50 py-3 px-6 text-left">
-                                        <p
-                                            class="block antialiased font-sans text-[11px] font-medium uppercase text-blue-gray-400">
-                                            completion</p>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($results as $result)
-                                    <tr>
-                                        <!-- Colonne du nom de l'utilisateur -->
-                                        <td class="py-3 px-5 border-b border-blue-gray-50">
-                                            <div class="flex items-center gap-4">
-                                                <p
-                                                    class="block antialiased font-sans text-sm leading-normal text-blue-gray-900 font-bold">
-                                                    {{ $result['search_phrase'] }}%
-                                                </p>
-                                            </div>
-                                        </td>
-
-                                        <!-- Colonne du nombre de crédits -->
-                                        <td class="py-3 px-5 border-b border-blue-gray-50">
-                                            <p
-                                                class="block antialiased font-sans text-xs font-medium text-blue-gray-600">
-                                                <a href="{{ $result['result_link'] }}"
-                                                    target="_blank">{{ $result['result_link'] }}</a>
-                                                <!-- Nombre de crédits restants -->
-                                            </p>
-                                        </td>
-
-                                        <!-- Colonne exemple (progression ou autre) -->
-                                        <td class="py-3 px-5 border-b border-blue-gray-50">
-                                            <div class="w-10/12">
-                                                <p
-                                                    class="antialiased font-sans mb-1 block text-xs font-medium text-blue-gray-600">
-                                                    {{ $result['similarity_calculated'] }}%
-                                                </p>
-                                                <div
-                                                    class="flex flex-start bg-blue-gray-50 overflow-hidden w-full rounded-sm font-sans text-xs font-medium h-1">
-                                                    <div class="flex justify-center items-center h-full bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800"
-                                                        style="width: 60%;"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                @endif
-
+                    @foreach ($results as $result)
+                        <div>
+                            <div
+                                class="block items-center justify-center p-5 text-base font-medium text-gray-500 rounded-lg bg-gray-50 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white">
+                                <div class="w-10/12">
+                                    <p class="antialiased font-sans mb-1 block text-xs font-medium text-blue-gray-600">
+                                        {{ $result['similarity_calculated'] }}%
+                                    </p>
+                                    <div
+                                        class="flex flex-start bg-blue-gray-50 overflow-hidden w-full rounded-sm font-sans text-xs font-medium h-1">
+                                        <div class="flex justify-center items-center h-full bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800"
+                                            style="width: 60%;"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <p
+                                        class="block antialiased font-sans text-sm leading-normal text-blue-gray-900 font-bold">
+                                        {{ substr($result['search_phrase'], 0, 20) }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="block antialiased font-sans text-xs font-medium text-blue-gray-600">
+                                        <a href="{{ $result['result_link'] }}"
+                                            target="_blank">{{ $result['result_link'] }}</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                    </tbody>
+                    </table>
             </div>
 
+            @endif
+
         </div>
+
+    </div>
 
     </div>
 
