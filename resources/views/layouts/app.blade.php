@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/512/5100/5100994.png" type="image/x-icon">
 
     <title>{{ config('app.name', 'Jcrify') }}</title>
 
