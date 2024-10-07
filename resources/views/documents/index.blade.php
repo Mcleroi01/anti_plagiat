@@ -9,7 +9,7 @@
 
 
     <div class="relative overflow-x-auto">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-200" id="table">
+        <table class="w-full text-sm text-left rtl:text-right text-gray-200" id="search-table">
             <thead
                 class="text-xs  uppercase bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
                 <tr>
@@ -62,17 +62,16 @@
     </div>
 
     @section('script')
-        <script>
-            $(document).ready(function() {
-                $('#table').DataTable({
-                    "scrollX": true,
-                    "fixedColumns": {
-                        "start": 3
-                    }
-                });
+        <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
 
-                $('#candidatpresence').css('width', '100%');
-            });
+        <script>
+        
+            if (document.getElementById("search-table") && typeof simpleDatatables.DataTable !== 'undefined') {
+                const dataTable = new simpleDatatables.DataTable("#search-table", {
+                    searchable: true,
+                    sortable: false
+                });
+            }
         </script>
     @endsection
 

@@ -68,7 +68,11 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13.5 3c-.169 0-.334.014-.5.025V11h7.975c.011-.166.025-.331.025-.5A7.5 7.5 0 0 0 13.5 3Z" />
                     </svg>
-                    Result</button>
+                    Result
+                    @if (!empty($results))
+                        <span class="flex w-3 h-3 me-3 bg-blue-600 rounded-full"></span>
+                    @endif
+                </button>
             </li>
 
         </ul>
@@ -93,15 +97,32 @@
                                         stroke-width="2"
                                         d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
                                 </svg>
-                                <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span
-                                        class="font-semibold">Click to
-                                        upload</span> or drag and drop</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX.
-                                    800x400px)</p>
+                                <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                                    <span class="font-semibold">Cliquez pour télécharger</span> ou glisser-déposer
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">PDF</p>
                             </div>
                             <input id="dropzone-file" type="file" class="hidden" name="document" required />
                         </label>
                     </div>
+
+                    <!-- Section pour afficher le nom du fichier -->
+                    <p id="file-name" class="mt-2 text-sm text-gray-600 dark:text-gray-300"></p>
+
+                    <script>
+                        const fileInput = document.getElementById('dropzone-file');
+                        const fileNameDisplay = document.getElementById('file-name');
+
+                        fileInput.addEventListener('change', function() {
+                            const file = this.files[0];
+                            if (file) {
+                                fileNameDisplay.textContent = `Fichier sélectionné : ${file.name}`;
+                            } else {
+                                fileNameDisplay.textContent = '';
+                            }
+                        });
+                    </script>
+
                 </div>
 
                 <button type="submit" id="uploadBtn"
@@ -126,6 +147,28 @@
                             </div>
 
                             <div id="chart"></div>
+
+                        </div>
+                        <div class="px-6 py-4 flex flex-row items-center">
+                            <p class="dark:text-gray-200 text-gray-800 text-sm">
+                                Winston a détecté le texte comme étant {{ $averageSimilarity }} % plagié. Veuillez
+                                consulter la liste complète des cas de plagiat ci-dessous.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div class="rounded overflow-hidden shadow-lg">
+
+
+                        <div class="">
+
+                            <div class=" bg-white p-4">
+                                <h1>Score Ai</h1>
+                            </div>
+
+                            <div id="chart">Pas de résultat pour la vérification du plagiat par AI pour le moment.
+                            </div>
 
                         </div>
                         <div class="px-6 py-4 flex flex-row items-center">
@@ -243,35 +286,42 @@
                     </div>
                 @endif
                 @if (!empty($results))
-                    @foreach ($results as $result)
-                        <div>
-                            <div
-                                class="block items-center justify-center p-5 text-base font-medium text-gray-500 rounded-lg bg-gray-50 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white">
-                                <div class="w-10/12">
-                                    <p class="antialiased font-sans mb-1 block text-xs font-medium text-blue-gray-600">
-                                        {{ $result['similarity_calculated'] }}%
-                                    </p>
-                                    <div
-                                        class="flex flex-start bg-blue-gray-50 overflow-hidden w-full rounded-sm font-sans text-xs font-medium h-1">
-                                        <div class="flex justify-center items-center h-full bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800"
-                                            style="width: 60%;"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-4">
-                                    <p
-                                        class="block antialiased font-sans text-sm leading-normal text-blue-gray-900 font-bold">
-                                        {{ substr($result['search_phrase'], 0, 20) }}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="block antialiased font-sans text-xs font-medium text-blue-gray-600">
-                                        <a href="{{ $result['result_link'] }}"
-                                            target="_blank">{{ $result['result_link'] }}</a>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
+
+                    <div>
+                        <table id="search-table">
+                            <thead>
+                                <tr>
+                                    
+                                    <th>
+                                        <span class="flex items-center">
+                                            extrait_résultat
+                                        </span>
+                                    </th>
+                                    <th>
+                                        <span class="flex items-center">
+                                            similarité_calculée
+                                        </span>
+                                    </th>
+                                    <th>
+                                        <span class="flex items-center">
+                                            lien_résultat
+                                        </span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($results as $result)
+                                    <tr>
+                                        <td>{{ substr($result['result_snippet'], 0, 20) }}</td>
+                                        <td>{{ $result['similarity_calculated'] }}%</td>
+                                        <td><a href="{{ $result['result_link'] }}"
+                                                target="_blank">{{ $result['result_link'] }}</a></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
                     </tbody>
                     </table>
             </div>
@@ -282,7 +332,10 @@
 
     </div>
 
-    </div>
+
+
+
+
 
 
 
@@ -304,6 +357,8 @@
     </div>
 
     @section('script')
+        <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
+
         <script>
             const uploadBtn = document.getElementById('uploadBtn');
             const loadingSpinner = document.getElementById('hidden-section');
@@ -314,6 +369,13 @@
 
 
             });
+
+            if (document.getElementById("search-table") && typeof simpleDatatables.DataTable !== 'undefined') {
+                const dataTable = new simpleDatatables.DataTable("#search-table", {
+                    searchable: true,
+                    sortable: false
+                });
+            }
         </script>
     @endsection
 

@@ -17,14 +17,14 @@ export default {
             },
             colors: {
                 odcolor: "#ff7900",
-
-            }
+            },
         },
     },
 
     plugins: [
         require("flowbite/plugin")({
             charts: true,
+            datatables: true,
         }),
         // ... other plugins
     ],
