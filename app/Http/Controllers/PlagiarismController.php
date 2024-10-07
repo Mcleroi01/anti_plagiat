@@ -221,7 +221,7 @@ class PlagiarismController extends Controller
 
 
 
-    private function calculateHybridSimilarity($text1, $text2, $n = 2) // Par défaut, n = 2 pour des bigrams
+    private function calculateHybridSimilarity($text1, $text2)
     {
         // Normaliser les textes
         $text1 = $this->normalizeText($text1);
@@ -236,54 +236,58 @@ class PlagiarismController extends Controller
         similar_text($text1, $text2, $similarityPercentage);
 
         // Ajuster le seuil si nécessaire
-        if ($similarityPercentage > 50) { // Ajustez ce seuil
+        if ($similarityPercentage > 70) { // Ajustez ce seuil
             return $similarityPercentage; // Retourner la similarité élevée sans calculer Levenshtein
         }
 
-        // Générer les n-grams pour chaque texte
-        $nGrams1 = $this->nGrams($text1, $n);
-        $nGrams2 = $this->nGrams($text2, $n);
+        // Diviser les textes en mots
+        $words1 = explode(' ', $text1);
+        $words2 = explode(' ', $text2);
 
-        // Utiliser un ensemble pour les n-grams du deuxième texte pour améliorer la recherche
-        $nGramSet = array_unique($nGrams2);
+        // Utiliser un ensemble pour les mots du deuxième texte pour améliorer la recherche
+        $wordSet = array_unique($words2);
 
         $totalSimilarity = 0;
-        $nGramCount = 0;
+        $wordCount = 0;
 
-        foreach ($nGrams1 as $nGram) {
+        foreach ($words1 as $input) {
             $closest = null;
             $shortest = -1;
 
-            foreach ($nGramSet as $nGramComp) {
-                $lev = levenshtein($nGram, $nGramComp);
+            foreach ($wordSet as $word) {
+
+                $lev = levenshtein($input, $word);
 
                 // Cherche une correspondance exacte
                 if ($lev == 0) {
-                    $closest = $nGramComp;
+                    $closest = $word;
                     $shortest = 0;
                     break;
                 }
 
+
                 if ($lev <= $shortest || $shortest < 0) {
-                    $closest = $nGramComp;
+                    $closest = $word;
                     $shortest = $lev;
                 }
             }
 
-            // Calculer la similarité basée sur la distance Levenshtein
+
             if ($closest !== null) {
-                $nGramLength = strlen($nGram);
+                $inputLength = strlen($input);
                 $closestLength = strlen($closest);
 
-                if ($nGramLength > 0 && $closestLength > 0) {
-                    $similarityLevenshtein = (1 - $shortest / max($nGramLength, $closestLength)) * 100;
+
+                if ($inputLength > 0 && $closestLength > 0) {
+                    $similarityLevenshtein = (1 - $shortest / max($inputLength, $closestLength)) * 100;
                     $totalSimilarity += $similarityLevenshtein;
-                    $nGramCount++;
+                    $wordCount++;
                 }
             }
         }
 
-        return $nGramCount > 0 ? $totalSimilarity / $nGramCount : 0;
+
+        return $wordCount > 0 ? $totalSimilarity / $wordCount : 0;
     }
 
     private function nGrams($text, $n)
