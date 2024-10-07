@@ -135,7 +135,7 @@
         <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="dashboard" role="tabpanel"
             aria-labelledby="dashboard-tab">
             @if (isset($averageSimilarity))
-                <div class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-10 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-2 gap-10 mb-4">
 
                     <div class="rounded overflow-hidden shadow-lg">
 
@@ -173,8 +173,7 @@
                         </div>
                         <div class="px-6 py-4 flex flex-row items-center">
                             <p class="dark:text-gray-200 text-gray-800 text-sm">
-                                Winston a détecté le texte comme étant {{ $averageSimilarity }} % plagié. Veuillez
-                                consulter la liste complète des cas de plagiat ci-dessous.
+                                
                             </p>
                         </div>
 
@@ -274,7 +273,7 @@
             @endif
 
             <div
-                class="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-2 gap-10 items-center dark:text-gray-200 text-gray-800">
+                class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-10 items-center dark:text-gray-200 text-gray-800">
                 @if (!empty($text))
                     <div>
                         <h1 class="block mb-2 text-xl font-semibold dark:text-gray-200 text-gray-800">Votre texte

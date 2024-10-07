@@ -21,51 +21,49 @@ class DocumentController extends Controller
     }
     public function upload(Request $request)
     {
-        // Validation des données
-        $request->validate([
-            'document' => 'required|mimes:pdf,doc,docx|max:2048',
-        ]);
+        try {
+            $request->validate([
+                'document' => 'required|mimes:pdf,doc,docx|max:2048',
+            ]);
 
-        $user = auth()->user();
-        $credit = Credit::where('user_id', $user->id)->first();
+            $user = auth()->user();
+            $credit = Credit::where('user_id', $user->id)->first();
 
-        // Vérifier si l'utilisateur a des crédits disponibles
-        if (!$credit || $credit->documents_uploaded >= $credit->monthly_limit) {
-            return redirect()->back()->with('error', 'Limite de documents atteinte pour ce mois.');
+            if (!$credit || $credit->documents_uploaded >= $credit->monthly_limit) {
+                return redirect()->back()->with('error', 'Limite de documents atteinte pour ce mois.');
+            }
+
+            $file = $request->file('document');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs('documents', $fileName, 'public');
+
+            $document = new Document();
+            $document->filename = $file->getClientOriginalName();
+            $document->path = $filePath;
+            $document->user_id = $user->id;
+            $document->save();
+
+            $plagiat = new PlagiarismController();
+            $result = $plagiat->detect($document);
+            $response = json_decode($result->getContent(), true);
+
+            $averageSimilarity = $response['average_similarity'];
+            $results = $response['results'];
+            $text = $response['text'];
+
+            $credit->increment('documents_uploaded');
+
+            return view('documents.create')
+                ->with('averageSimilarity', $averageSimilarity)
+                ->with('results', $results)
+                ->with('text', $text);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->validator)->withInput();
+        } catch (\Exception $th) {
+            return redirect()->back()->with('error', "Erreur lors du téléchargement du document: $th");
         }
-
-        // Traiter le fichier téléchargé
-        $file = $request->file('document');
-        $fileName = time() . '_' . $file->getClientOriginalName();
-        $filePath = $file->storeAs('documents', $fileName, 'public');
-
-        // Enregistrer le document dans la base de données
-        $document = new Document();
-        $document->filename = $file->getClientOriginalName();
-        $document->path = $filePath;
-        $document->user_id = $user->id;
-        $document->save();
-
-
-
-        // Détection de plagiat
-        $plagiat = new PlagiarismController();
-        $result = $plagiat->detect($document);
-        $response = json_decode($result->getContent(), true);
-
-        $averageSimilarity = $response['average_similarity'];
-        $results = $response['results'];
-        $text = $response['text'];
-
-        // Incrémenter le compteur de documents uploadés
-        $credit->increment('documents_uploaded');
-
-        return view('documents.create')
-            ->with('averageSimilarity', $averageSimilarity)
-            ->with('results', $results)
-            ->with('text', $text)
-        ;
     }
+
 
 
 
