@@ -72,8 +72,14 @@ class DocumentController extends Controller
     public function show(Document $document)
     {
 
-        return view('documents.show', compact('document'));
+        $searchResults = $document->searchResults;
+        $averageSimilarity = $searchResults->avg('similarity_calculated') ?? 0; // Valeur par défaut si aucune donnée
+
+
+        // Retourner la vue avec le document et les résultats de recherche
+        return view('documents.show', compact('document', 'searchResults', 'averageSimilarity'));
     }
+
 
     public function index()
     {

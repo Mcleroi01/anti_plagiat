@@ -11,7 +11,7 @@ class Document extends Model
     use HasFactory;
     protected $fillable = ['filename', 'path','email','user_id'];
 
-    public function searchresult():HasMany
+    public function searchResults():HasMany
     {
         return $this->hasMany(SearchResult::class);
     }

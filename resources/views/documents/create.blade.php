@@ -151,7 +151,9 @@
                         </div>
                         <div class="px-6 py-4 flex flex-row items-center">
                             <p class="dark:text-gray-200 text-gray-800 text-sm">
-                                Winston a détecté le texte comme étant {{ $averageSimilarity }} % plagié. Veuillez
+                                Winston a détecté le texte comme étant <em
+                                    class=" text-xl font-bold text-blue-600">{{ $averageSimilarity }}</em> % plagié.
+                                Veuillez
                                 consulter la liste complète des cas de plagiat ci-dessous.
                             </p>
                         </div>
@@ -173,7 +175,7 @@
                         </div>
                         <div class="px-6 py-4 flex flex-row items-center">
                             <p class="dark:text-gray-200 text-gray-800 text-sm">
-                                
+
                             </p>
                         </div>
 
@@ -290,7 +292,7 @@
                         <table id="search-table">
                             <thead>
                                 <tr>
-                                    
+
                                     <th>
                                         <span class="flex items-center">
                                             extrait_résultat
@@ -320,14 +322,12 @@
                             </tbody>
                         </table>
                     </div>
-
-                    </tbody>
-                    </table>
             </div>
-
-            @endif
-
         </div>
+
+        @endif
+
+    </div>
 
     </div>
 
@@ -369,12 +369,19 @@
 
             });
 
-            if (document.getElementById("search-table") && typeof simpleDatatables.DataTable !== 'undefined') {
-                const dataTable = new simpleDatatables.DataTable("#search-table", {
-                    searchable: true,
-                    sortable: false
+            <
+            script >
+                $(document).ready(function() {
+                    $('#table').DataTable({
+                        "scrollX": true,
+                        "fixedColumns": {
+                            "start": 3
+                        }
+                    });
+
+                    $('#candidatpresence').css('width', '100%');
                 });
-            }
+        </script>
         </script>
     @endsection
 
