@@ -240,23 +240,45 @@ $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(valu
     :class="{ 'dark text-bodydark bg-boxdark-2': darkMode === true }">
 
 
-    <div class="">
+    <div class="bg-white dark:bg-[#1E293B]">
         @include('layouts.navigation')
-        <div class="p-4 sm:ml-64 mt-20">
+        <div class="p-4 sm:ml-64 mt-20 bg-white dark:bg-[#1E293B]">
 
 
 
             <!-- Page Heading -->
             @if (isset($header))
-                <header class="bg-white dark:bg-gray-700 shadow items-center">
-                    <div class="p-6">
-                        {{ $header }}
-                    </div>
-                </header>
+                <nav class="flex px-5 py-3 text-gray-700 rounded-lg bg-[#eaeaebf3] dark:bg-[#1E293B]"
+                    aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                        <li class="inline-flex items-center">
+                            <a href="#"
+                                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                                @yield('svg')
+                                {{ $header }}
+
+                            </a>
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd"
+                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                        </li>
+                        <li class="inline-flex items-center">
+                            <a id="previous-page" href="{{ $previous_page ?? 'dashboard' }}"
+                                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"></a>
+                        </li>
+                    </ol>
+                </nav>
             @endif
 
             <!-- Page Content -->
-            <main>
+            <main class="bg-white dark:bg-[#1E293B]">
                 {{ $slot }}
             </main>
         </div>
@@ -281,6 +303,7 @@ $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(valu
             });
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
     @yield('script')
 </body>
 

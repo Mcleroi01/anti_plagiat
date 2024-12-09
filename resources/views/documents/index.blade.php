@@ -52,7 +52,7 @@
 
 
                             <a class="sm:text-end text-neutral-200"
-                                href="{{ route('documents.show', $item->id) }}" target="_blank">Checker</a>
+                                href="{{ route('documents.show', $item->id) }}" >Checker</a>
                         </td>
                     </tr>
                 @endforeach
@@ -62,17 +62,16 @@
     </div>
 
     @section('script')
-        <script>
-            $(document).ready(function() {
-                $('#table').DataTable({
-                    "scrollX": true,
-                    "fixedColumns": {
-                        "start": 3
-                    }
-                });
+        <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
 
-                $('#candidatpresence').css('width', '100%');
-            });
+        <script>
+        
+            if (document.getElementById("search-table") && typeof simpleDatatables.DataTable !== 'undefined') {
+                const dataTable = new simpleDatatables.DataTable("#search-table", {
+                    searchable: true,
+                    sortable: false
+                });
+            }
         </script>
     @endsection
 

@@ -1,4 +1,5 @@
 <x-app-layout>
+    
     @if (Auth::user()->hasRole('super admin'))
         <div class=" p-4">
 

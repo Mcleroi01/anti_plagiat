@@ -1,5 +1,12 @@
 <x-app-layout>
-    <div class=" p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+    <x-slot name="header">
+        
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            {{ __('Détails de la Détection du Plagiat') }}
+        </h2>
+    </x-slot>
+    <div class=" p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="dashboard" role="tabpanel"
+        aria-labelledby="dashboard-tab">
         @if (isset($averageSimilarity))
             <div class="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-2 gap-10 mb-4">
 
@@ -8,7 +15,7 @@
 
                     <div class="">
 
-                        <div class=" bg-white p-4">
+                        <div class=" bg-gray-50 dark:bg-gray-800 p-4 border-b-2 border-gray-200 dark:border-gray-700">
                             <h1>Score humain</h1>
                         </div>
 
@@ -17,11 +24,13 @@
                     </div>
                     <div class="px-6 py-4 flex flex-row items-center">
                         <p class="dark:text-gray-200 text-gray-800 text-sm">
-                            Winston a détecté le texte comme étant <em
-                                class=" text-xl font-bold text-blue-600">{{ $averageSimilarity }}</em> % plagié.
-                            Veuillez
-                            consulter la liste complète des cas de plagiat ci-dessous.
+                            Jcrify a détecté que <em
+                                class="text-xl font-bold text-blue-600">{{ round($averageSimilarity, 2) }}</em> % du
+                            texte soumis
+                            présente des similarités avec d'autres sources.
+                            Veuillez consulter ci-dessous la liste détaillée des cas de plagiat identifiés.
                         </p>
+
                     </div>
 
                 </div>
@@ -31,11 +40,13 @@
 
                     <div class="">
 
-                        <div class=" bg-white p-4">
+                        <div class=" bg-gray-50 dark:bg-gray-800 p-4 border-b-2 border-gray-200 dark:border-gray-700">
                             <h1>Score Ai</h1>
                         </div>
 
-                        <div id="chart">Pas de résultat pour la vérification du plagiat par AI pour le moment.
+                        <div id="chart" class=" p-4">Actuellement, aucun résultat de vérification du plagiat par
+                            intelligence artificielle n'est disponible. Cette fonctionnalité sera prochainement
+                            intégrée. Merci de votre patience.
                         </div>
 
                     </div>
@@ -154,24 +165,26 @@
             @endif
             @if (!empty($searchResults))
 
-                <table id="table" class="min-w-full table-auto border-collapse border border-gray-300">
-                    <thead class="bg-gray-100 dark:bg-gray-700">
+                <table id="search-table" class="w-full text-sm text-left rtl:text-right text-gray-200">
+                    <thead
+                        class="text-xs  uppercase bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
                         <tr>
-                            <th class="px-4 py-2 border border-gray-300">Extrait Résultat</th>
-                            <th class="px-4 py-2 border border-gray-300">Similarité Calculée</th>
-                            <th class="px-4 py-2 border border-gray-300">Lien Résultat</th>
+                            <th scope="col" class="px-6 py-3">Extrait Résultat</th>
+                            <th scope="col" class="px-6 py-3">Similarité Calculée</th>
+                            <th scope="col" class="px-6 py-3">Lien Résultat</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($searchResults as $result)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-600">
-                                <td class="px-4 py-2 border border-gray-300">
-                                    {{ substr($result->result_snippet, 0, 20) }}...</td>
-                                <td class="px-4 py-2 border border-gray-300">{{ $result->similarity_calculated }}%</td>
-                                <td class="px-4 py-2 border border-gray-300">
+                        @foreach ($document->searchResults as $result)
+                            <tr
+                                class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
+                                <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">
+                                    {{ substr($result->result_snippet, 0, 20) }}...</th>
+                                <td class="px-6 py-4">{{ $result->similarity_calculated }}%</td>
+                                <td class="px-6 py-4">
                                     <a href="{{ $result->result_link }}" class="text-blue-500 hover:underline"
                                         target="_blank">
-                                        Voir le résultat
+                                        {{ substr($result->result_link, 0, 30) }} ...
                                     </a>
                                 </td>
                             </tr>
@@ -180,11 +193,20 @@
                 </table>
 
 
-                </tbody>
-                </table>
         </div>
 
         @endif
 
     </div>
+
+    @section('script')
+        <script>
+            if (document.getElementById("search-table") && typeof simpleDatatables.DataTable !== 'undefined') {
+                const dataTable = new simpleDatatables.DataTable("#search-table", {
+                    searchable: true,
+                    sortable: true
+                });
+            }
+        </script>
+    @endsection
 </x-app-layout>

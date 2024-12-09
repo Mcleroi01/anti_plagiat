@@ -142,7 +142,8 @@
 
                         <div class="">
 
-                            <div class=" bg-white p-4">
+                            <div
+                                class=" bg-gray-50 dark:bg-gray-800 p-4 border-b-2 border-gray-200 dark:border-gray-700">
                                 <h1>Score humain</h1>
                             </div>
 
@@ -151,11 +152,13 @@
                         </div>
                         <div class="px-6 py-4 flex flex-row items-center">
                             <p class="dark:text-gray-200 text-gray-800 text-sm">
-                                Winston a détecté le texte comme étant <em
-                                    class=" text-xl font-bold text-blue-600">{{ $averageSimilarity }}</em> % plagié.
-                                Veuillez
-                                consulter la liste complète des cas de plagiat ci-dessous.
+                                Jcrify a détecté que <em
+                                    class="text-xl font-bold text-blue-600">{{ round($averageSimilarity, 2) }}</em> %
+                                du texte soumis
+                                présente des similarités avec d'autres sources.
+                                Veuillez consulter ci-dessous la liste détaillée des cas de plagiat identifiés.
                             </p>
+
                         </div>
 
                     </div>
@@ -165,11 +168,15 @@
 
                         <div class="">
 
-                            <div class=" bg-white p-4">
+                            <div
+                                class=" bg-gray-50 dark:bg-gray-800 p-4 border-b-2 border-gray-200 dark:border-gray-700">
                                 <h1>Score Ai</h1>
                             </div>
 
-                            <div id="chart">Pas de résultat pour la vérification du plagiat par AI pour le moment.
+                            <div id="chart" class=" p-4">Actuellement, aucun résultat de vérification du plagiat
+                                par
+                                intelligence artificielle n'est disponible. Cette fonctionnalité sera prochainement
+                                intégrée. Merci de votre patience.
                             </div>
 
                         </div>
@@ -289,21 +296,22 @@
                 @if (!empty($results))
 
                     <div>
-                        <table id="search-table">
-                            <thead>
+                        <table id="search-table" class="w-full text-sm text-left rtl:text-right text-gray-200">
+                            <thead
+                                class="text-xs  uppercase bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
                                 <tr>
 
-                                    <th>
+                                    <th scope="col" class="px-6 py-3">
                                         <span class="flex items-center">
                                             extrait_résultat
                                         </span>
                                     </th>
-                                    <th>
+                                    <th scope="col" class="px-6 py-3">
                                         <span class="flex items-center">
                                             similarité_calculée
                                         </span>
                                     </th>
-                                    <th>
+                                    <th scope="col" class="px-6 py-3">
                                         <span class="flex items-center">
                                             lien_résultat
                                         </span>
@@ -312,10 +320,10 @@
                             </thead>
                             <tbody>
                                 @foreach ($results as $result)
-                                    <tr>
-                                        <td>{{ substr($result['result_snippet'], 0, 20) }}</td>
-                                        <td>{{ $result['similarity_calculated'] }}%</td>
-                                        <td><a href="{{ $result['result_link'] }}"
+                                    <tr class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
+                                        <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">{{ substr($result['result_snippet'], 0, 20) }}</th>
+                                        <td class="px-6 py-4">{{ $result['similarity_calculated'] }}%</td>
+                                        <td class="px-6 py-4"><a href="{{ $result['result_link'] }}"
                                                 target="_blank">{{ $result['result_link'] }}</a></td>
                                     </tr>
                                 @endforeach
@@ -356,7 +364,7 @@
     </div>
 
     @section('script')
-        <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
+       
 
         <script>
             const uploadBtn = document.getElementById('uploadBtn');
@@ -368,20 +376,12 @@
 
 
             });
-
-            <
-            script >
-                $(document).ready(function() {
-                    $('#table').DataTable({
-                        "scrollX": true,
-                        "fixedColumns": {
-                            "start": 3
-                        }
-                    });
-
-                    $('#candidatpresence').css('width', '100%');
+            if (document.getElementById("search-table") && typeof simpleDatatables.DataTable !== 'undefined') {
+                const dataTable = new simpleDatatables.DataTable("#search-table", {
+                    searchable: true,
+                    sortable: true
                 });
-        </script>
+            }
         </script>
     @endsection
 
