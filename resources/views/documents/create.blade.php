@@ -82,7 +82,7 @@
 
         <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="profile" role="tabpanel"
             aria-labelledby="profile-tab">
-            <form action="{{ route('documents.create') }}" method="POST" enctype="multipart/form-data" class="">
+            <form action="{{ route('documents.upload') }}" method="POST" enctype="multipart/form-data" class="">
                 @csrf
                 <label for="document" class="block mb-2 text-xl font-semibold text-white">Télécharger un document
                     :</label>
@@ -102,7 +102,8 @@
                                 </p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">PDF</p>
                             </div>
-                            <input id="dropzone-file" type="file" class="hidden" name="document" required />
+                            <input id="dropzone-file" type="file" class="hidden" name="document"
+                                accept=".pdf,.doc,.docx" required />
                         </label>
                     </div>
 
@@ -289,10 +290,11 @@
                             soumis</h1>
                         <div
                             class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-md p-4">
-                            <p> {{ substr($text, 0, 1000) }} ...</p>
+                            <p id="plagiarismText">{!! $text !!} ...</p>
                         </div>
                     </div>
                 @endif
+
                 @if (!empty($results))
 
                     <div>
@@ -320,8 +322,10 @@
                             </thead>
                             <tbody>
                                 @foreach ($results as $result)
-                                    <tr class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
-                                        <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">{{ substr($result['result_snippet'], 0, 20) }}</th>
+                                    <tr
+                                        class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
+                                        <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">
+                                            {{ substr($result['result_snippet'], 0, 20) }}</th>
                                         <td class="px-6 py-4">{{ $result['similarity_calculated'] }}%</td>
                                         <td class="px-6 py-4"><a href="{{ $result['result_link'] }}"
                                                 target="_blank">{{ $result['result_link'] }}</a></td>
@@ -364,9 +368,14 @@
     </div>
 
     @section('script')
-       
-
         <script>
+            function highlightPlagiarizedText(text) {
+                // Supposons que la fonction detectPlagiarism retourne le texte plagé en rouge
+                // et le reste en noir.
+                const regex = /plagiarized_text_pattern/g; // Remplacez par un vrai motif de texte plagé
+                return text.replace(regex, (match) => `<span style="color: red;">${match}</span>`);
+            }
+
             const uploadBtn = document.getElementById('uploadBtn');
             const loadingSpinner = document.getElementById('hidden-section');
 
@@ -382,6 +391,33 @@
                     sortable: true
                 });
             }
+
+
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: '{{ session('success') }}',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    timerProgressBar: true,
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: '{{ session('error') }}',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    timerProgressBar: true,
+                });
+            @endif
         </script>
     @endsection
 

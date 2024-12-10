@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
-use App\Http\Requests\StoreDocumentRequest;
-use App\Http\Requests\UpdateDocumentRequest;
 use App\Models\Credit;
+use App\Models\Document;
 use App\Models\SearchResult;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Http\Requests\StoreDocumentRequest;
+use App\Http\Requests\UpdateDocumentRequest;
 
 class DocumentController extends Controller
 {
@@ -22,20 +23,30 @@ class DocumentController extends Controller
     public function upload(Request $request)
     {
         try {
+
             $request->validate([
-                'document' => 'required|mimes:pdf,doc,docx|max:2048',
+                'document' => 'required|mimes:pdf,doc,docx|max:10120',
+            ], [
+                'document.required' => 'Veuillez sélectionner un document à télécharger.',
+                'document.mimes' => 'Le document doit être au format PDF, DOC ou DOCX.',
+                'document.max' => 'La taille maximale du document est de 10 Mo.',
             ]);
+
+            Log::info('Validation passée avec succès.');
 
             $user = auth()->user();
             $credit = Credit::where('user_id', $user->id)->first();
+
 
             if (!$credit || $credit->documents_uploaded >= $credit->monthly_limit) {
                 return redirect()->back()->with('error', 'Limite de documents atteinte pour ce mois.');
             }
 
+
             $file = $request->file('document');
             $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('documents', $fileName, 'public');
+            $filePath = $file->storeAs('documents/' . $user->id, $fileName, 'public'); // Stockage dans un sous-dossier utilisateur
+
 
             $document = new Document();
             $document->filename = $file->getClientOriginalName();
@@ -43,45 +54,43 @@ class DocumentController extends Controller
             $document->user_id = $user->id;
             $document->save();
 
+
             $plagiat = new PlagiarismController();
             $result = $plagiat->detect($document);
             $response = json_decode($result->getContent(), true);
 
-            $averageSimilarity = $response['average_similarity'];
-            $results = $response['results'];
-            $text = $response['text'];
+            // Extraction des résultats
+            $averageSimilarity = $response['average_similarity'] ?? 0;
+            $results = $response['results'] ?? [];
+            $highlighted_text = $response['highlighted_text'] ?? '';
+            
+
 
             $credit->increment('documents_uploaded');
+
 
             return view('documents.create')
                 ->with('averageSimilarity', $averageSimilarity)
                 ->with('results', $results)
-                ->with('text', $text);
+                ->with('text', $highlighted_text);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->validator)->withInput();
-        } catch (\Exception $th) {
-            return redirect()->back()->with('error', "Erreur lors du téléchargement du document: $th");
+        } catch (\Exception $e) {
+            Log::error("Erreur lors du téléchargement du document : {$e->getMessage()}");
+            return redirect()->back()->with('error', "Erreur lors du téléchargement du document. Veuillez réessayer.");
         }
     }
 
 
-
-
-
-
     public function show(Document $document)
     {
-       
+
         $searchResults = $document->searchResults;
 
         $singleResult = $document->searchResults->first();
 
         $averageSimilarity = $singleResult->avg('similarity_calculated');
-        
 
-
-
-        // Retourner la vue avec le document et les résultats de recherche
         return view('documents.show', compact('document', 'searchResults', 'averageSimilarity'));
     }
 
