@@ -34,6 +34,22 @@ class RolePermissionController extends Controller
         ]);
     }
 
+        public function updateUserRole(Request $request)
+    {
+        $userId = $request->input('user_id');
+        $roleId = $request->input('role_id');
+        $assign = $request->input('assign');
+        $user = User::find($userId);
+
+        if ($assign === "true") {
+            $user->roles()->attach($roleId);
+        } else {
+            $user->roles()->detach($roleId);
+        }
+
+        return response()->json(['message' => 'User role updated successfully']);
+    }
+
     public function assignRole(Request $request)
     {
         $request->validate([

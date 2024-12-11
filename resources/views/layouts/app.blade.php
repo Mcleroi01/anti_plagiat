@@ -303,6 +303,7 @@ $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(valu
             });
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
     @yield('script')
 </body>
