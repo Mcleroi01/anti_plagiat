@@ -17,6 +17,23 @@ class RolePermissionController extends Controller
         return view('admins.roles-permissions', compact('users', 'roles'));
     }
 
+        public function getUsersRoles()
+    {
+        $users = User::with('roles')->get();
+        $roles = Role::all();
+
+        $userRoles = [];
+        foreach ($users as $user) {
+            $userRoles[$user->id] = $user->roles->pluck('id')->toArray();
+        }
+
+        return response()->json([
+            'users' => $users,
+            'roles' => $roles,
+            'userRoles' => $userRoles,
+        ]);
+    }
+
     public function assignRole(Request $request)
     {
         $request->validate([
