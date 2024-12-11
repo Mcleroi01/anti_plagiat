@@ -49,9 +49,11 @@ Route::middleware('auth')->group(function () {
 
 
     Route::get('/admin/roles-permissions', [RolePermissionController::class, 'index'])->name('admin.roles-permissions');
+    Route::get('/users-roles', [RolePermissionController::class, 'getUsersRoles'])->name(name: 'roles.users.index');
+    Route::post('/users/roles/update', [RolePermissionCntroller::class, 'updateUserRole'])->name('users.roles.update');
     Route::post('/admin/roles-permissions/assign', [RolePermissionController::class, 'assignRole'])->name('admin.roles.assign');
     Route::post('/admin/roles-permissions/revoke', [RolePermissionController::class, 'revokeRole'])->name('admin.roles.revoke');
-    
+
     Route::get('/credits/renouveler/{id}', [CreditController::class, 'showRenewalForm'])->name('credits.renouveler');
     Route::post('/credits/renouveler', [CreditController::class, 'renewCredits'])->name('credits.renouveler.submit');
 

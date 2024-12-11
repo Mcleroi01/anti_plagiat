@@ -39,22 +39,23 @@
         </ul>
     </div>
     <div id="default-tab-content">
-        <div class="hidden p-4 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200" id="profile" role="tabpanel"
-            aria-labelledby="profile-tab">
-            <table class="table-auto w-full bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200 rounded shadow-md">
+        <div class="hidden p-4 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200" id="profile"
+            role="tabpanel" aria-labelledby="profile-tab">
+            <table
+                class="table-auto w-full bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200 rounded shadow-md">
                 <thead>
                     <tr>
-                        <th class="px-4 py-2">Nom</th>
-                        <th class="px-4 py-2">Email</th>
-                        <th class="px-4 py-2">Rôles</th>
+                        <th class="px-4 py-2 border-r">Nom</th>
+                        <th class="px-4 py-2 border-r">Email</th>
+                        <th class="px-4 py-2 border-r">Rôles</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($users as $user)
                         <tr class="border-t">
-                            <td class="px-4 py-2">{{ $user->name }}</td>
-                            <td class="px-4 py-2">{{ $user->email }}</td>
-                            <td class="px-4 py-2">
+                            <td class="px-4 py-2 border">{{ $user->name }}</td>
+                            <td class="px-4 py-2 border">{{ $user->email }}</td>
+                            <td class="px-4 py-2 border">
                                 @foreach ($user->roles as $role)
                                     <span class="bg-blue-500 text-white px-2 py-1 rounded">{{ $role->name }}</span>
                                 @endforeach
@@ -64,36 +65,12 @@
                 </tbody>
             </table>
         </div>
-        <div class="hidden p-4 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200" id="dashboard" role="tabpanel"
-            aria-labelledby="dashboard-tab">
-            <form action="{{ route('admin.roles.assign') }}" method="POST">
-                @csrf
-
-                <div class="mb-4">
-                    <label for="user_id" class="block text-sm font-medium text-gray-200">Utilisateur</label>
-                    <select name="user_id" id="user_id" class="form-input mt-1 block w-full">
-                        @foreach ($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="mb-4">
-                    <label for="role" class="block text-sm font-medium text-gray-200">Rôle</label>
-                    <select name="role" id="role" class="form-input mt-1 block w-full">
-                        @foreach ($roles as $role)
-                            <option value="{{ $role->name }}">{{ $role->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Attribuer le rôle</button>
-                </div>
-            </form>
+        <div class="hidden p-4 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200" id="dashboard"
+            role="tabpanel" aria-labelledby="dashboard-tab">
+            <x-assign-roles-table></x-assign-roles-table>
         </div>
-        <div class="hidden p-4 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200" id="settings" role="tabpanel"
-            aria-labelledby="settings-tab">
+        <div class="hidden p-4 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-200" id="settings"
+            role="tabpanel" aria-labelledby="settings-tab">
             <form action="{{ route('admin.roles.revoke') }}" method="POST">
                 @csrf
 
@@ -129,4 +106,120 @@
         </div>
     </div>
 
+    @section('script')
+        <script>
+            if (document.getElementById("usersRolesTable") && typeof simpleDatatables.DataTable !== 'undefined') {
+                const dataTable = new simpleDatatables.DataTable("#usersRolesTable", {
+                    searchable: false,
+                    sortable: false,
+                    pagging: false,
+                    perPageSelect: false
+                })
+            }
+        </script>
+
+        <script>
+            $(document).ready(function() {
+                getUsersRoles();
+            });
+        </script>
+
+        <script>
+            function getUsersRoles() {
+                $.ajax({
+                    url: "{{ route('roles.users.index') }}",
+                    method: "GET",
+                    success: function(response) {
+                        var users = response.users;
+                        var roles = response.roles;
+                        var userRoles = response.userRoles;
+
+                        // Create the table header with roles
+                        var header = '<tr class="bg-bg-chart"><th style="background-color: #d1d5db;"></th>';
+                        roles.forEach(function(role) {
+                            header +=
+                                '<th class="text-center">' + role.name + '</th>';
+                        });
+                        header += '</tr>';
+                        $('#usersRolesTable thead').html(header);
+
+                        // Create the table body with users and checkboxes
+                        var body = '';
+
+                        // Initial rendering of the table
+                        users.forEach(function(user) {
+                            body +=
+                                '<tr><th class="text-md text-start"><a href="#" class="hover:bg-[#] p-2" data-user-id="' +
+                                user.id + '" data-user-name="' + user.name + '">' + user.name + '</a></th>';
+                            roles.forEach(function(role) {
+                                var checked = userRoles[user.id] && userRoles[user.id].includes(role
+                                    .id) ? 'checked' : '';
+                                body +=
+                                    '<td class="text-center"><input type="checkbox" class="user-checkbox" data-role-id="' +
+                                    role.id + '" data-user-id="' + user.id +
+                                    '" ' + checked + '></td>';
+                            });
+                            body += '</tr>';
+                        });
+
+                        $('#usersRolesTable tbody').html(body);
+
+                        // Attach change event listeners to checkboxes
+                        var requestInProgress = false;
+
+                        $('#usersRolesTable').on('change', 'input.user-checkbox', function() {
+                            if (requestInProgress) {
+                                return;
+                            }
+
+                            requestInProgress = true;
+
+                            var roleId = $(this).data('role-id');
+                            var userId = $(this).data('user-id');
+                            var checked = $(this).is(':checked');
+                            // Your existing AJAX logic to update user's roles on the server
+                            $.ajax({
+                                url: "{{ route('users.roles.update') }}",
+                                method: 'POST',
+                                data: {
+                                    _token: '{{ csrf_token() }}',
+                                    role_id: roleId,
+                                    user_id: userId,
+                                    assign: checked
+                                },
+                                success: function(response) {
+                                    Swal.fire({
+                                        title: 'Succès!',
+                                        text: response.message,
+                                        icon: 'success',
+                                        timer: 2000,
+                                        timerProgressBar: true,
+                                        background: '#132329', // Fond sombre
+                                        color: '#fff', // Couleur du texte blanche
+                                        iconColor: '#ffdd57',
+                                    });
+                                    requestInProgress = false;
+                                },
+                                error: function(error) {
+                                    Swal.fire({
+                                        title: 'Erreur!',
+                                        text: 'Il y a eu une erreur lors de l\'assignation du rôle.',
+                                        icon: 'error',
+                                        confirmButtonText: 'OK',
+                                        background: '#132329', // Fond sombre
+                                        color: '#fff', // Couleur du texte blanche
+                                        iconColor: '#ffdd57',
+                                    });
+                                    requestInProgress = false;
+                                }
+                            });
+                        });
+                    },
+                    error: function(error) {
+                        console.error("There was an error fetching roles and permissions:", error);
+                    }
+                })
+            }
+        </script>
+    @endsection
 </x-app-layout>
