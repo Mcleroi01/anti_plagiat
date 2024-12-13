@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use TypeError;
 use GuzzleHttp\Client;
 use App\Models\Document;
 use App\Models\Plagiarism;
@@ -9,78 +10,25 @@ use App\Models\SearchResult;
 use Smalot\PdfParser\Parser;
 use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Facades\Log;
+use App\Models\SimilataryResultLocal;
 use App\Http\Requests\StorePlagiarismRequest;
 use App\Http\Requests\UpdatePlagiarismRequest;
+use App\Models\DocumentsLocal;
 
 class PlagiarismController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-
-    public function detect(Document $document)
+    public function detectApiSearch(Document $document)
     {
-        $normalizedPath = public_path('storage/' . $document->path);
+        $text = $this->extractTextFromDocument($document);
         $documentId = $document->id;
-
-        if (!file_exists($normalizedPath)) {
-            Log::error("Fichier non trouvé : " . $normalizedPath);
-            return response()->json(['error' => 'Fichier non trouvé.'], 404);
-        }
-
         try {
-            Log::info("Début du traitement pour le fichier : " . $normalizedPath);
-
-            $extension = strtolower(pathinfo($normalizedPath, PATHINFO_EXTENSION));
-            $text = '';
-
-            // Gestion des différents types de fichiers
-            switch ($extension) {
-                case 'pdf':
-                    $parser = new Parser();
-                    $pdf = $parser->parseFile($normalizedPath);
-                    $text = $pdf->getText();
-                    break;
-
-                case 'docx':
-                    $phpWord = IOFactory::load($normalizedPath);
-
-                    // Parcourir toutes les sections du document Word
-                    foreach ($phpWord->getSections() as $section) {
-                        $elements = $section->getElements();
-
-                        foreach ($elements as $element) {
-                            if ($element instanceof \PhpOffice\PhpWord\Element\Text) {
-                                $text .= $element->getText() . ' ';
-                            } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
-                                foreach ($element->getElements() as $textElement) {
-                                    if ($textElement instanceof \PhpOffice\PhpWord\Element\Text) {
-                                        $text .= $textElement->getText() . ' ';
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    break;
-
-
-                case 'txt':
-                    $text = file_get_contents($normalizedPath);
-                    break;
-
-                default:
-                    Log::error("Type de fichier non pris en charge : " . $extension);
-                    return response()->json(['error' => 'Type de fichier non pris en charge.'], 415);
-            }
-
+            Log::info("Début du traitement pour le fichier : " . $text);
             if (empty($text)) {
                 Log::error("Impossible d'extraire le texte du fichier.");
                 return response()->json(['error' => 'Aucun texte détecté dans le fichier.'], 400);
             }
 
             Log::info("Texte extrait, longueur : " . strlen($text));
-
-            // Nettoyage du texte (réutilisez vos regex et logique ici)
             $text = $this->cleanText($text);
 
             Log::info("Texte nettoyé, longueur : " . strlen($text));
@@ -101,42 +49,9 @@ class PlagiarismController extends Controller
             return response()->json(['error' => 'Erreur de traitement du fichier : ' . $e->getMessage()], 500);
         }
     }
-
-
-    private function cleanText($text)
-    {
-        // Nettoyage du texte : suppression des numéros de section
-        $text = preg_replace('/\b\d+\.\s*/', '', $text); // Supprime les numéros sous forme de 1. ou 2.
-        $text = preg_replace('/\b(?:I{1,3}|IV|V|VI{0,3}|IX|X{1,3})\.\s*/', '', $text); // Supprime les numéros romains
-        $text = preg_replace('/\b(?:année académique|préambule|liste des tableaux|ENSEIGNEMENT SUPERIEUR ET UNIVERSITAIRE INSTITUT SUPERIEUR|défendu en vue de lobtention du|république démocratique du congo|chap|remerciements|introduction|chapitre|annexe|bibliographie|table|objectif général|forces et faiblesses de l’étude|dédicaces|table des matières|généralités sur le sujet|of\scontents)\b/i', '', $text); // Supprime les phrases non pertinentes
-
-        // Nettoyage du texte : suppression des caractères non pertinents
-        $text = preg_replace('/[^\p{L}\p{N}\s]/u', '', $text); // Enlève les caractères non pertinents, y compris les points
-        $text = preg_replace('/\s+/', ' ', $text); // Normalise les espaces
-        $text = trim($text); // Retire les espaces inutiles
-        $text = preg_replace('/^\s*\n/m', '', $text); // Enlève les lig
-        return trim($text);
-    }
-
     private function processSegments($text, $documentId)
     {
-        $words = explode(' ', $text);
-        $segments = [];
-        $currentSegment = [];
-
-        // Segmentation du texte en blocs de 300 mots
-        foreach ($words as $word) {
-            $currentSegment[] = $word;
-            if (count($currentSegment) >= 300) {
-                $segments[] = implode(' ', $currentSegment);
-                $currentSegment = [];
-            }
-        }
-
-        // Ajouter les mots restants dans un segment
-        if (count($currentSegment) > 0) {
-            $segments[] = implode(' ', $currentSegment);
-        }
+        $segments = $this->createSegments($text);
 
         Log::info("Nombre de segments créés : " . count($segments));
 
@@ -144,126 +59,80 @@ class PlagiarismController extends Controller
         $totalSegments = 0;
         $resultsToStore = [];
 
-        // Allonger le temps d'exécution si nécessaire
-        set_time_limit(300);
+        foreach ($segments as  $segment) {
 
-        // Parcourir chaque segment pour calculer la similarité
-        foreach ($segments as $segment) {
-            Log::info("Traitement du segment : " . substr($segment, 0, 50) . "...");
+            if (is_array($segment) && isset($segment['text'])) {
+                $segmentText = $segment['text'];
 
-            if (strlen(trim($segment)) < 10) {
-                Log::info("Segment trop court, ignoré.");
-                continue;
-            }
+                Log::info("Traitement du segment : " . substr($segmentText, 0, 50) . "...");
 
-            // Diviser le segment si nécessaire
-            $splitSegments = $this->splitSegment(trim($segment), 2048);
-
-            foreach ($splitSegments as $splitSegment) {
-                Log::info("Recherche de similarité pour le segment : " . substr($splitSegment, 0, 50) . "...");
-
-                $searchResults = $this->searchSegment($splitSegment); // Méthode pour effectuer une recherche externe
-
-                if (!empty($searchResults['organic'])) {
-                    $segmentNormalized = strtolower(trim($splitSegment));
-                    $snippetNormalized = strtolower(trim($searchResults['organic'][0]['snippet']));
-
-                    $similarity = $this->calculateHybridSimilarity($segmentNormalized, $snippetNormalized);
-                    Log::info("Similarité calculée : " . $similarity . "%");
-
-                    if ($similarity >= 10) {
-                        $totalSimilarity += $similarity;
-                        $totalSegments++;
-                        Log::info("Segment retenu avec une similarité de " . $similarity . "%");
-
-                        $resultsToStore[] = [
-                            'document_id' => $documentId,
-                            'search_phrase' => $splitSegment,
-                            'result_snippet' => $searchResults['organic'][0]['snippet'],
-                            'similarity_calculated' => $similarity,
-                            'result_link' => $searchResults['organic'][0]['link'],
-                        ];
-                    } else {
-                        Log::info("Similarité inférieure à 10%, segment ignoré.");
-                    }
-                } else {
-                    Log::info("Aucun résultat trouvé pour ce segment.");
+                // Ignorez les segments trop courts
+                if (strlen(trim($segmentText)) < 10) {
+                    Log::info("Segment trop court, ignoré.");
+                    continue;
                 }
+
+                // Découpez le segment si nécessaire
+                $splitSegments = $this->splitSegment(trim($segmentText), 300);
+
+                foreach ($splitSegments as $splitSegment) {
+                    Log::info("Recherche de similarité pour le segment : " . substr($splitSegment, 0, 50) . "...");
+
+                    // Rechercher les résultats pour le segment
+                    $searchResults = $this->searchSegment($splitSegment);
+
+                    if (!empty($searchResults['organic'])) {
+                        $segmentNormalized = strtolower(trim($splitSegment));
+                        $snippetNormalized = strtolower(trim($searchResults['organic'][0]['snippet']));
+                        // Calculer la similarité
+                        $similarity = $this->calculateHybridSimilarity($segmentNormalized, $snippetNormalized);
+                        Log::info("Similarité calculée : " . $similarity . "%");
+
+                        if ($similarity >= 10) {
+                            $totalSimilarity += $similarity;
+                            $totalSegments++;
+                            Log::info("Segment retenu avec une similarité de " . $similarity . "%");
+
+                            // Ajouter le résultat au tableau à stocker
+                            $resultsToStore[] = [
+                                'document_id' => $documentId,
+                                'search_phrase' => $splitSegment,
+                                'result_snippet' => $searchResults['organic'][0]['snippet'],
+                                'similarity_calculated' => $similarity,
+                                'result_link' => $searchResults['organic'][0]['link'],
+                                'page_number' => $segment['page'] ?? 0, // Utiliser la page si disponible
+                            ];
+                        } else {
+                            Log::info("Similarité inférieure à 10%, segment ignoré.");
+                        }
+                    } else {
+                        Log::info("Aucun résultat trouvé pour ce segment.");
+                    }
+                }
+            } else {
+                Log::warning("Le segment n'est pas valide : " . var_export($segment, true));
             }
         }
 
-        // Calcul de la similarité moyenne
+
         $averageSimilarity = $totalSegments > 0 ? $totalSimilarity / $totalSegments : 0;
 
-        // Ajouter la similarité globale à chaque résultat
         foreach ($resultsToStore as &$result) {
             $result['global_similarity_calculated'] = $averageSimilarity;
         }
 
-        // Sauvegarder les résultats dans la base de données
         foreach ($resultsToStore as $result) {
-            SearchResult::create($result); // Assurez-vous que le modèle est configuré correctement
+            SearchResult::create($result);
         }
-
-
-        
 
         return [
             'success' => true,
             'message' => 'Traitement terminé',
             'average_similarity' => $averageSimilarity,
             'results' => $resultsToStore,
-            'text' => $text
+            'text' => $text,
         ];
     }
-
-
-    private function splitSegment($segment, $maxLength = 2048)
-    {
-        $chunks = [];
-        if (strlen($segment) > $maxLength) {
-            $currentChunk = '';
-
-            foreach (explode(' ', $segment) as $word) {
-                if (strlen($currentChunk) + strlen($word) + 1 > $maxLength) {
-                    $chunks[] = trim($currentChunk);
-                    $currentChunk = '';
-                }
-
-                $currentChunk .= $word . ' ';
-            }
-
-
-            if (!empty(trim($currentChunk))) {
-                $chunks[] = trim($currentChunk);
-            }
-        } else {
-
-            $chunks[] = trim($segment);
-        }
-
-        return $chunks;
-    }
-
-    private function highlightPlagiarizedText($text, $plagiarizedSegments)
-    {
-        // Liste des segments plagiés
-        foreach ($plagiarizedSegments as $segment) {
-            $searchPhrase = preg_quote($segment['search_phrase'], '/'); // Convertit le texte en un format compatible avec les expressions régulières
-            $snippet = $segment['result_snippet'];
-
-            // Remplace chaque occurrence du segment plagié par un surlignage HTML
-            $highlightedSnippet = "<mark>" . htmlspecialchars($snippet) . "</mark>";
-            $text = preg_replace(
-                '/\b' . $searchPhrase . '\b/i',  // Recherche de l'occurrence exacte sans distinction de casse
-                $highlightedSnippet,
-                $text
-            );
-        }
-
-        return $text;
-    }
-
     private function searchSegment($segment)
     {
         $client = new Client();
@@ -296,106 +165,324 @@ class PlagiarismController extends Controller
         }
     }
 
-
-
-    private function calculateHybridSimilarity($text1, $text2)
+    public function detectLocal(Document $document)
     {
-        // Normaliser les textes
-        $text1 = $this->normalizeText($text1);
-        $text2 = $this->normalizeText($text2);
+        try {
+            // Extraire le texte du document
+            $text = $this->extractTextFromDocument($document);
+            $documentId = $document->id;
 
-        // Éviter de calculer la similarité si les deux textes sont vides
-        if (empty($text1) && empty($text2)) {
-            return 100; // Deux textes vides sont considérés comme identiques
+            if (empty($text)) {
+                return response()->json(['error' => 'Aucun texte détecté dans le fichier.'], 400);
+            }
+
+            // Segmentation et nettoyage
+            $segments = $this->createSegments($text);
+            $localDocuments = DocumentsLocal::all();
+            $localSegments = $this->prepareLocalSegments($localDocuments);
+
+            Log::info("Nombre de segments analysés : " . count($segments));
+            $results = $this->processLocalSegments($segments, $localSegments, $documentId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Analyse locale terminée.',
+                'results' => $results,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'analyse locale : " . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors de l\'analyse locale.'], 500);
+        }
+    }
+
+    private function processLocalSegments($segments, $localSegments, $documentId)
+    {
+        $results = [];
+
+        foreach ($segments as $segment) {
+            // Vérifiez si le segment est bien une chaîne ou un tableau contenant 'text'
+            if (is_array($segment) && isset($segment['text'])) {
+                $segmentText = $segment['text'];
+            } elseif (is_string($segment)) {
+                $segmentText = $segment;
+            } else {
+                continue; // Ignorer les segments invalides
+            }
+
+            // Ignorer les segments trop courts
+            if (strlen(trim($segmentText)) < 10) {
+                continue;
+            }
+
+        
+            $splitSegments = $this->splitSegment(trim($segmentText), 300);
+
+            
+            $joinedSegment = implode(' ', $splitSegments);
+
+            $highestSimilarity = 0;
+            $bestMatch = null;
+
+            foreach ($localSegments as $localSegment) {
+                $similarity = $this->calculateHybridSimilarity($joinedSegment, $localSegment);
+
+                if ($similarity > $highestSimilarity) {
+                    $highestSimilarity = $similarity;
+                    $bestMatch = implode(', ', $localSegment);
+                }
+            }
+
+            if ($highestSimilarity > 70) { // Seuil de similarité
+                $result = [
+                    'document_id' => $documentId,
+                    'search_phrase' => $joinedSegment, // Chaîne combinée
+                    'best_match' => $bestMatch,
+                    'similarity_percentage' => $highestSimilarity,
+                    'page_number' =>  $segment['page']?? 0, // Utiliser la page si disponible
+                ];
+
+                $this->storeResultIfNotExists($result);
+                $results[] = $result;
+            }
         }
 
-        // Utiliser similar_text() pour une évaluation rapide
+        return $results;
+    }
+
+
+    private function storeResultIfNotExists($result)
+    {
+        if (!SimilataryResultLocal::where('document_id', $result['document_id'])
+            ->where('search_phrase', $result['search_phrase'])
+            ->exists()) {
+            SimilataryResultLocal::create($result);
+        }
+    }
+
+    private function prepareLocalSegments($localDocuments)
+    {
+        $localSegments = [];
+
+        foreach ($localDocuments as $localDocument) {
+            $segments = $this->createSegments($localDocument->content);
+            $localSegments = array_merge($localSegments, $segments);
+        }
+
+        return $localSegments;
+    }
+
+
+    private function searchLocalSegment($segment, $localSegments)
+    {
+        $highestSimilarity = 0;
+
+        foreach ($localSegments as $localText) {
+            // Ensure $localText is a string
+            if (is_array($localText)) {
+                $localText = $localText['content'] ?? ''; // Adjust key name based on your data structure
+            }
+
+            $cleanedLocalText = $this->cleanText($localText);
+
+            if (!is_string($cleanedLocalText) || strlen($cleanedLocalText) < 1) {
+                continue; // Skip invalid or empty cleaned texts
+            }
+
+            $similarity = $this->calculateHybridSimilarity($segment, $cleanedLocalText);
+
+            if ($similarity > $highestSimilarity) {
+                $highestSimilarity = $similarity;
+            }
+        }
+
+        return $highestSimilarity;
+    }
+
+    private function extractTextFromDocument($document): bool|string
+    {
+        $path = public_path('storage/' . $document->path);
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $text = '';
+
+        try {
+            switch ($extension) {
+                case 'pdf':
+                    $parser = new Parser();
+                    $pdf = $parser->parseFile($path);
+                    $text = $pdf->getText();
+                    break;
+
+                case 'docx':
+                    $phpWord = IOFactory::load($path);
+                    foreach ($phpWord->getSections() as $section) {
+                        foreach ($section->getElements() as $element) {
+                            if ($element instanceof \PhpOffice\PhpWord\Element\Text) {
+                                $text .= $element->getText() . ' ';
+                            }
+                        }
+                    }
+                    break;
+
+                case 'txt':
+                    $text = file_get_contents($path);
+                    break;
+            }
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'extraction du texte pour le document ID " . $document->id . ": " . $e->getMessage());
+        }
+
+        return $text;
+    }
+
+    private function cleanText($text)
+    {
+        // Nettoyage du texte : suppression des numéros de section
+        $text = preg_replace('/\b\d+\.\s*/', '', $text); // Supprime les numéros sous forme de 1. ou 2.
+        $text = preg_replace('/\b(?:I{1,3}|IV|V|VI{0,3}|IX|X{1,3})\.\s*/', '', $text); // Supprime les numéros romains
+        $text = preg_replace('/\b(?:année académique|préambule|liste des tableaux|ENSEIGNEMENT SUPERIEUR ET UNIVERSITAIRE INSTITUT SUPERIEUR|défendu en vue de lobtention du|république démocratique du congo|chap|remerciements|introduction|chapitre|annexe|bibliographie|table|objectif général|forces et faiblesses de l’étude|dédicaces|table des matières|généralités sur le sujet|of\scontents)\b/i', '', $text); // Supprime les phrases non pertinentes
+
+        // Nettoyage du texte : suppression des caractères non pertinents
+        $text = preg_replace('/[^\p{L}\p{N}\s]/u', '', $text); // Enlève les caractères non pertinents, y compris les points
+        $text = preg_replace('/\s+/', ' ', $text); // Normalise les espaces
+        $text = trim($text); // Retire les espaces inutiles
+        $text = preg_replace('/^\s*\n/m', '', $text); // Enlève les lig
+        return trim($text);
+    }
+
+    private function createSegments(string $text, int $wordsPerSegment = 300, int $wordsPerPage = 300): array
+    {
+        $words = explode(' ', $text);
+        $segments = [];
+        $currentSegment = [];
+        $currentPage = 1;
+        $currentWordCount = 0;
+
+        foreach ($words as $word) {
+            $currentSegment[] = $word;
+            $currentWordCount++;
+
+            if (count($currentSegment) >= $wordsPerSegment) {
+                $segments[] = ['text' => implode(' ', $currentSegment), 'page' => $currentPage];
+                $currentSegment = [];
+            }
+
+            if ($currentWordCount >= $wordsPerPage) {
+                $currentPage++;
+                $currentWordCount = 0;
+            }
+        }
+
+        if (!empty($currentSegment)) {
+            $segments[] = ['text' => implode(' ', $currentSegment), 'page' => $currentPage];
+        }
+
+        return $segments;
+    }
+    private function splitSegment($segment, $maxLength = 2048)
+    {
+        $chunks = [];
+        if (strlen($segment) > $maxLength) {
+            $currentChunk = '';
+
+            foreach (explode(' ', $segment) as $word) {
+                if (strlen($currentChunk) + strlen($word) + 1 > $maxLength) {
+                    $chunks[] = trim($currentChunk);
+                    $currentChunk = '';
+                }
+
+                $currentChunk .= $word . ' ';
+            }
+
+            if (!empty(trim($currentChunk))) {
+                $chunks[] = trim($currentChunk);
+            }
+        } else {
+            $chunks[] = trim($segment);
+        }
+
+        return $chunks;
+    }
+
+    private function highlightPlagiarizedText($text, $plagiarizedSegments)
+    {
+        foreach ($plagiarizedSegments as $segment) {
+            $searchPhrase = preg_quote($segment['search_phrase'], '/');
+            $text = preg_replace("/\b($searchPhrase)\b/", '<span class="highlight">$1</span>', $text);
+        }
+
+        return $text;
+    }
+
+    private function calculateHybridSimilarity($text1, $text2, $threshold = 70)
+    {
+        // Normalize and ensure inputs are strings
+        $normalize = function ($text) {
+            if (is_array($text)) {
+                $text = implode(' ', $text);
+            }
+            return (string)$this->normalizeText(trim($text));
+        };
+
+        $text1 = $normalize($text1);
+        $text2 = $normalize($text2);
+
+        // Handle empty cases
+        if (empty($text1) && empty($text2)) {
+            return 100;
+        }
+        if (empty($text1) || empty($text2)) {
+            return 0;
+        }
+
+        // Step 1: Calculate similarity using `similar_text`
+        if (!is_string($text1) || !is_string($text2)) {
+            throw new TypeError('Arguments must be of type string');
+        }
+
+        $similarityPercentage = 0;
         similar_text($text1, $text2, $similarityPercentage);
 
-        // Ajuster le seuil si nécessaire
-        if ($similarityPercentage > 70) { // Ajustez ce seuil
-            return $similarityPercentage; // Retourner la similarité élevée sans calculer Levenshtein
+        if ($similarityPercentage >= $threshold) {
+            return $similarityPercentage;
         }
 
-        // Diviser les textes en mots
+        // Step 2: Fallback to word-level similarity using Levenshtein
         $words1 = explode(' ', $text1);
-        $words2 = explode(' ', $text2);
-
-        // Utiliser un ensemble pour les mots du deuxième texte pour améliorer la recherche
-        $wordSet = array_unique($words2);
+        $words2 = array_unique(explode(' ', $text2)); // Unique words in $text2
 
         $totalSimilarity = 0;
         $wordCount = 0;
 
-        foreach ($words1 as $input) {
-            $closest = null;
-            $shortest = -1;
+        foreach ($words1 as $word1) {
+            $bestMatch = null;
+            $lowestDistance = PHP_INT_MAX;
 
-            foreach ($wordSet as $word) {
-
-                $lev = levenshtein($input, $word);
-
-                // Cherche une correspondance exacte
-                if ($lev == 0) {
-                    $closest = $word;
-                    $shortest = 0;
-                    break;
-                }
-
-
-                if ($lev <= $shortest || $shortest < 0) {
-                    $closest = $word;
-                    $shortest = $lev;
+            foreach ($words2 as $word2) {
+                $lev = levenshtein($word1, $word2);
+                if ($lev < $lowestDistance) {
+                    $lowestDistance = $lev;
+                    $bestMatch = $word2;
                 }
             }
 
+            if ($bestMatch !== null) {
+                $inputLength = strlen($word1);
+                $matchLength = strlen($bestMatch);
 
-            if ($closest !== null) {
-                $inputLength = strlen($input);
-                $closestLength = strlen($closest);
-
-
-                if ($inputLength > 0 && $closestLength > 0) {
-                    $similarityLevenshtein = (1 - $shortest / max($inputLength, $closestLength)) * 100;
-                    $totalSimilarity += $similarityLevenshtein;
+                if ($inputLength > 0 && $matchLength > 0) {
+                    $similarity = (1 - $lowestDistance / max($inputLength, $matchLength)) * 100;
+                    $totalSimilarity += $similarity;
                     $wordCount++;
                 }
             }
         }
 
-
+        // Step 3: Return the average similarity
         return $wordCount > 0 ? $totalSimilarity / $wordCount : 0;
     }
-
-    private function cosineSimilarity($vec1, $vec2)
-    {
-        $dotProduct = 0;
-        $magnitude1 = 0;
-        $magnitude2 = 0;
-
-        foreach ($vec1 as $index => $value) {
-            if (isset($vec2[$index])) {
-                $dotProduct += $value * $vec2[$index];
-            }
-            $magnitude1 += pow($value, 2);
-        }
-
-        foreach ($vec2 as $value) {
-            $magnitude2 += pow($value, 2);
-        }
-
-        return $dotProduct / (sqrt($magnitude1) * sqrt($magnitude2));
-    }
-
-   
-
-
-
     private function normalizeText($text)
     {
-
         $text = preg_replace('/[^\w\s]/u', '', $text);
-
         return $text;
     }
 }

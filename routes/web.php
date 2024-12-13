@@ -1,17 +1,20 @@
 <?php
 
+use App\Models\User;
+use App\Models\Credit;
+use App\Models\Document;
+use App\Models\DocumentsLocal;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\PlagiarismController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CreditController;
-use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\PlagiarismController;
 use App\Http\Controllers\GoogleLoginController;
-use App\Models\User;
-use App\Models\Document;
-use App\Models\Credit;
+use App\Http\Controllers\DocumentsLocalController;
+use App\Http\Controllers\RolePermissionController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -20,7 +23,7 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     $user = User::all();
     $usersWithUserRole = User::role('user')->get();
-    $user1 = auth()->user();
+    $user1 = Auth::user();
 
     // Récupérer les documents appartenant à cet utilisateur
     $documents = Document::where('user_id', $user1->id)->get();
@@ -43,6 +46,12 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('/api/progress/{document}', [DocumentController::class, 'checkBatchProgress']);
+
+    Route::get('/document/local/', [DocumentsLocalController::class, 'index'])->name('documents_local.index');
+    Route::post('/document/local/create', [DocumentsLocalController::class, 'upload'])->name('documents_local.upload');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -51,7 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/roles-permissions', [RolePermissionController::class, 'index'])->name('admin.roles-permissions');
     Route::post('/admin/roles-permissions/assign', [RolePermissionController::class, 'assignRole'])->name('admin.roles.assign');
     Route::post('/admin/roles-permissions/revoke', [RolePermissionController::class, 'revokeRole'])->name('admin.roles.revoke');
-    
+
     Route::get('/credits/renouveler/{id}', [CreditController::class, 'showRenewalForm'])->name('credits.renouveler');
     Route::post('/credits/renouveler', [CreditController::class, 'renewCredits'])->name('credits.renouveler.submit');
 

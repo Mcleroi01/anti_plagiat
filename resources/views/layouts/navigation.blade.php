@@ -25,7 +25,7 @@
                     </svg>
                 </a>
             </div>
-           
+
             <div class="flex items-center gap-3 2xsm:gap-7">
                 <ul class="flex items-center gap-2 2xsm:gap-4">
                     <li>
@@ -318,6 +318,26 @@
                             <p
                                 class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
                                 Users</p>
+                        </button>
+                    </a>
+                </li>
+                <li>
+                    <a class="" href="{{route('documents_local.index')}}">
+                        <button
+                            class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('documents_local.index') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
+                            type="button">
+                            <svg class="w-6 h-6" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                                viewBox="0 0 24 24">
+                                <path fill-rule="evenodd"
+                                    d="M11 4.717c-2.286-.58-4.16-.756-7.045-.71A1.99 1.99 0 0 0 2 6v11c0 1.133.934 2.022 2.044 2.007 2.759-.038 4.5.16 6.956.791V4.717Zm2 15.081c2.456-.631 4.198-.829 6.956-.791A2.013 2.013 0 0 0 22 16.999V6a1.99 1.99 0 0 0-1.955-1.993c-2.885-.046-4.76.13-7.045.71v15.081Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+
+
+                            <p
+                                class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
+                                Document Local</p>
                         </button>
                     </a>
                 </li>
