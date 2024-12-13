@@ -47,12 +47,23 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-
+    Route::resource('users', UserController::class);
     Route::get('/admin/roles-permissions', [RolePermissionController::class, 'index'])->name('admin.roles-permissions');
     Route::get('/users-roles', [RolePermissionController::class, 'getUsersRoles'])->name(name: 'roles.users.index');
+    Route::get('/roles-permissions', [RolePermissionController::class, 'getRolesPermissions'])->name('roles.permissions.index');
     Route::post('/users/roles/update', [RolePermissionController::class, 'updateUserRole'])->name('users.roles.update');
-    Route::post('/admin/roles-permissions/assign', action: [RolePermissionController::class, 'assignRole'])->name('admin.roles.assign');
-    Route::post('/admin/roles-permissions/revoke', [RolePermissionController::class, 'revokeRole'])->name('admin.roles.revoke');
+    Route::post('/roles-permissions/update', [RolePermissionController::class, 'updateRolePermissions'])->name(name: 'roles.permissions.update');
+
+
+    // Roles only
+    Route::post('/roles/create', [RolePermissionController::class, 'createRole'])->name('roles.store');
+    Route::put('/roles/{role}', [RolePermissionController::class, 'updateRole'])->name('roles.update');
+    Route::delete('/roles/{role}', [RolePermissionController::class, 'destroyRole'])->name('roles.destroy');
+
+    // Permissions only
+    Route::post('/permissions/create', [RolePermissionController::class, 'createPermission'])->name('permissions.store');
+    Route::put('/permissions/{permission}', [RolePermissionController::class, 'updatePermission'])->name('permissions.update');
+    Route::delete('/permissions/{permission}', [RolePermissionController::class, 'destroyPermission'])->name('permissions.destroy');
 
     Route::get('/credits/renouveler/{id}', [CreditController::class, 'showRenewalForm'])->name('credits.renouveler');
     Route::post('/credits/renouveler', [CreditController::class, 'renewCredits'])->name('credits.renouveler.submit');

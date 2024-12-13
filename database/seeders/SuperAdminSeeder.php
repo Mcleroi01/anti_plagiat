@@ -14,12 +14,12 @@ class SuperAdminSeeder extends Seeder
         $user = User::firstOrCreate([
             'email' => 'carlomusongela@gmail.com', // Utilisez l'email souhaité
         ], [
-            'name' => 'Super Admin', // Nom de l'utilisateur
+            'name' => 'Carlo Musongela', // Nom de l'utilisateur
             'password' => bcrypt('12345678'), // Mot de passe de l'utilisateur
         ]);
 
         // Assigner le rôle de super admin
-        $role = Role::firstOrCreate(['name' => 'super admin']);
+        $role = Role::firstOrCreate(['name' => 'superadmin']);
         $user->assignRole($role);
     }
 }
