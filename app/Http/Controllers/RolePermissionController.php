@@ -17,6 +17,39 @@ class RolePermissionController extends Controller
         return view('admins.roles-permissions', compact('users', 'roles'));
     }
 
+        public function getUsersRoles()
+    {
+        $users = User::with('roles')->get();
+        $roles = Role::all();
+
+        $userRoles = [];
+        foreach ($users as $user) {
+            $userRoles[$user->id] = $user->roles->pluck('id')->toArray();
+        }
+
+        return response()->json([
+            'users' => $users,
+            'roles' => $roles,
+            'userRoles' => $userRoles,
+        ]);
+    }
+
+        public function updateUserRole(Request $request)
+    {
+        $userId = $request->input('user_id');
+        $roleId = $request->input('role_id');
+        $assign = $request->input('assign');
+        $user = User::find($userId);
+
+        if ($assign === "true") {
+            $user->roles()->attach($roleId);
+        } else {
+            $user->roles()->detach($roleId);
+        }
+
+        return response()->json(['message' => 'User role updated successfully']);
+    }
+
     public function assignRole(Request $request)
     {
         $request->validate([
