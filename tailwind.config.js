@@ -16,12 +16,12 @@ export default {
         fontFamily: {
             satoshi: ["Satoshi", "sans-serif"],
         },
-        screens: {
-            "2xsm": "375px",
-            xsm: "425px",
-            "3xl": "2000px",
-            ...defaultTheme.screens,
-        },
+        // screens: {
+        //     "2xsm": "375px",
+        //     xsm: "425px",
+        //     "3xl": "2000px",
+        //     ...defaultTheme.screens,
+        // },
         extend: {
             colors: {
                 current: "currentColor",
@@ -50,7 +50,7 @@ export default {
                 whiten: "#F1F5F9",
                 whiter: "#F5F7FD",
                 boxdark: "#24303F",
-                "boxdark-2": "#1A222C",
+                boxdark2: "#1A222C",
                 strokedark: "#2E3A47",
                 "form-strokedark": "#3d4d60",
                 "form-input": "#1d2a39",
@@ -225,12 +225,8 @@ export default {
             opacity: {
                 65: ".65",
             },
-            backgroundImage: {
-                video: "url('../images/video/video.png')",
-            },
-            content: {
-                "icon-copy": 'url("../images/icon/icon-copy-alt.svg")',
-            },
+            
+            
             transitionProperty: { width: "width", stroke: "stroke" },
             borderWidth: {
                 6: "6px",

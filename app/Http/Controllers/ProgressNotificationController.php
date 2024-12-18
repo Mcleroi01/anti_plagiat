@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Document;
+use Illuminate\Support\Facades\Log;
 use App\Models\ProgressNotification;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreProgressNotificationRequest;
 use App\Http\Requests\UpdateProgressNotificationRequest;
 
@@ -13,7 +16,26 @@ class ProgressNotificationController extends Controller
      */
     public function index()
     {
-        //
+
+        try {
+            $user = Auth::user();
+            $document = Document::where('user_id', $user->id)->first();
+            if (!$document) {
+                return response()->json(['error' => 'Document not found'], 404);
+            }
+
+            $notifications = ProgressNotification::where('document_id', $document->id)
+            ->where('status', 'Terminé') 
+            ->with('document') 
+            ->latest() 
+            ->get();
+
+            // Retourner les notifications avec les documents inclus
+            return response()->json($notifications);
+        } catch (\Exception $e) {
+            Log::error('Notification fetch error: ', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'An error occurred while fetching notifications'], 500);
+        }
     }
 
     /**

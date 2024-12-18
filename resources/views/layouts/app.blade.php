@@ -13,27 +13,10 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
-    {{-- <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css"  rel="stylesheet" /> --}}
-    {{-- <link rel="stylesheet" href="https://cdn.datatables.net/2.1.7/css/dataTables.dataTables.css"> --}}
-    <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        @charset "utf-8";
-        /* CSS Document */
-
-        /******* Common Element CSS Start ******/
-        * {
-            margin: 0px;
-            padding: 0px;
-            outline: none;
-        }
-
-        body {
-            background-color: #3f5de1;
-        }
-
+      
         .main-container {
             min-height: 100vh;
             display: flex;
@@ -236,14 +219,13 @@
     </style>
 </head>
 
-<body class="body bg-white dark:bg-[#1E293B] text-black" x-data="{ page: 'ecommerce', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }" x-init="darkMode = JSON.parse(localStorage.getItem('darkMode'));
+<body class="" x-data="{ page: 'ecommerce', 'loaded': true, 'darkMode': true, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }" x-init="darkMode = JSON.parse(localStorage.getItem('darkMode'));
 $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))"
-    :class="{ 'dark text-bodydark bg-boxdark-2': darkMode === true }">
+    :class="{ 'dark dark:bg-[#1E293B] text-gray-200': darkMode === true }">
 
-
-    <div class="bg-white dark:bg-[#1E293B]">
+    <div class="bg-white dark:bg-[#1E293B] h-screen">
         @include('layouts.navigation')
-        <div class="p-4 sm:ml-64 mt-20 bg-white dark:bg-[#1E293B]">
+        <div class="p-4 sm:ml-64 pt-25 bg-white dark:bg-[#1E293B] h-screen">
 
 
 

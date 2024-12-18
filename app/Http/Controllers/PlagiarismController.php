@@ -4,16 +4,16 @@ namespace App\Http\Controllers;
 
 use TypeError;
 use GuzzleHttp\Client;
+use GuzzleHttp\Promise;
 use App\Models\Document;
-use App\Models\Plagiarism;
 use App\Models\SearchResult;
 use Smalot\PdfParser\Parser;
+use App\Models\DocumentsLocal;
 use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpWord\Element\Text;
 use App\Models\SimilataryResultLocal;
-use App\Http\Requests\StorePlagiarismRequest;
-use App\Http\Requests\UpdatePlagiarismRequest;
-use App\Models\DocumentsLocal;
+use App\Models\HighlightedText;
 
 class PlagiarismController extends Controller
 {
@@ -22,20 +22,20 @@ class PlagiarismController extends Controller
         $text = $this->extractTextFromDocument($document);
         $documentId = $document->id;
         try {
-            Log::info("Début du traitement pour le fichier : " . $text);
+            Log::info("Début du traitement pour le fichier : ");
             if (empty($text)) {
                 Log::error("Impossible d'extraire le texte du fichier.");
                 return response()->json(['error' => 'Aucun texte détecté dans le fichier.'], 400);
             }
 
-            Log::info("Texte extrait, longueur : " . strlen($text));
+
             $text = $this->cleanText($text);
 
-            Log::info("Texte nettoyé, longueur : " . strlen($text));
 
-            // Traitement de segments et détection de similarité
+
             $processedData = $this->processSegments($text, $documentId);
             $highlightedText = $this->highlightPlagiarizedText($processedData['text'], $processedData['results']);
+            $this->storeHighlightedText($documentId, $highlightedText, $processedData['average_similarity']);
 
             return response()->json([
                 'success' => true,
@@ -64,11 +64,9 @@ class PlagiarismController extends Controller
             if (is_array($segment) && isset($segment['text'])) {
                 $segmentText = $segment['text'];
 
-                Log::info("Traitement du segment : " . substr($segmentText, 0, 50) . "...");
-
                 // Ignorez les segments trop courts
                 if (strlen(trim($segmentText)) < 10) {
-                    Log::info("Segment trop court, ignoré.");
+
                     continue;
                 }
 
@@ -76,9 +74,8 @@ class PlagiarismController extends Controller
                 $splitSegments = $this->splitSegment(trim($segmentText), 300);
 
                 foreach ($splitSegments as $splitSegment) {
-                    Log::info("Recherche de similarité pour le segment : " . substr($splitSegment, 0, 50) . "...");
 
-                    // Rechercher les résultats pour le segment
+
                     $searchResults = $this->searchSegment($splitSegment);
 
                     if (!empty($searchResults['organic'])) {
@@ -86,12 +83,11 @@ class PlagiarismController extends Controller
                         $snippetNormalized = strtolower(trim($searchResults['organic'][0]['snippet']));
                         // Calculer la similarité
                         $similarity = $this->calculateHybridSimilarity($segmentNormalized, $snippetNormalized);
-                        Log::info("Similarité calculée : " . $similarity . "%");
+
 
                         if ($similarity >= 10) {
                             $totalSimilarity += $similarity;
                             $totalSegments++;
-                            Log::info("Segment retenu avec une similarité de " . $similarity . "%");
 
                             // Ajouter le résultat au tableau à stocker
                             $resultsToStore[] = [
@@ -100,13 +96,11 @@ class PlagiarismController extends Controller
                                 'result_snippet' => $searchResults['organic'][0]['snippet'],
                                 'similarity_calculated' => $similarity,
                                 'result_link' => $searchResults['organic'][0]['link'],
-                                'page_number' => $segment['page'] ?? 0, // Utiliser la page si disponible
+                                'page_number' => $segment['page'] ?? 0,
                             ];
                         } else {
-                            Log::info("Similarité inférieure à 10%, segment ignoré.");
                         }
                     } else {
-                        Log::info("Aucun résultat trouvé pour ce segment.");
                     }
                 }
             } else {
@@ -133,6 +127,7 @@ class PlagiarismController extends Controller
             'text' => $text,
         ];
     }
+
     private function searchSegment($segment)
     {
         $client = new Client();
@@ -154,7 +149,7 @@ class PlagiarismController extends Controller
                 'verify' => false,
             ]);
 
-            Log::info('API response:', ['body' => $response->getBody()->getContents()]);
+
 
             return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
@@ -172,6 +167,8 @@ class PlagiarismController extends Controller
             $text = $this->extractTextFromDocument($document);
             $documentId = $document->id;
 
+            Log::info("debuts de traitement local ");
+
             if (empty($text)) {
                 return response()->json(['error' => 'Aucun texte détecté dans le fichier.'], 400);
             }
@@ -183,12 +180,13 @@ class PlagiarismController extends Controller
 
             Log::info("Nombre de segments analysés : " . count($segments));
             $results = $this->processLocalSegments($segments, $localSegments, $documentId);
+            $highlightedText = $this->highlightPlagiarizedText(
+                $text,
+                $results['results']
+            );
+            $this->storeHighlightedText($documentId, $highlightedText, $results['average_similarity']);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Analyse locale terminée.',
-                'results' => $results,
-            ]);
+            return $results;
         } catch (\Exception $e) {
             Log::error("Erreur lors de l'analyse locale : " . $e->getMessage());
             return response()->json(['error' => 'Erreur lors de l\'analyse locale.'], 500);
@@ -197,107 +195,128 @@ class PlagiarismController extends Controller
 
     private function processLocalSegments($segments, $localSegments, $documentId)
     {
-        $results = [];
+        try {
+            $totalSimilarity = 0;
+            $validSegments = 0;
+            $results = [];
 
-        foreach ($segments as $segment) {
-            // Vérifiez si le segment est bien une chaîne ou un tableau contenant 'text'
-            if (is_array($segment) && isset($segment['text'])) {
-                $segmentText = $segment['text'];
-            } elseif (is_string($segment)) {
-                $segmentText = $segment;
-            } else {
-                continue; // Ignorer les segments invalides
-            }
+            foreach ($segments as $segment) {
+                if (is_array($segment) && isset($segment['text'])) {
+                    $segmentText = trim($segment['text']);
 
-            // Ignorer les segments trop courts
-            if (strlen(trim($segmentText)) < 10) {
-                continue;
-            }
+                    if (empty($segmentText) || strlen($segmentText) < 10) {
+                        continue;
+                    }
 
-        
-            $splitSegments = $this->splitSegment(trim($segmentText), 300);
+                    $splitSegments = $this->splitSegment($segmentText, 300);
+                    $joinedSegment = implode(' ', $splitSegments);
 
-            
-            $joinedSegment = implode(' ', $splitSegments);
+                    $bestMatch = $this->findBestMatch($joinedSegment, $localSegments);
 
-            $highestSimilarity = 0;
-            $bestMatch = null;
+                    // Only process segments with similarity > 70
+                    if (!empty($joinedSegment) && $bestMatch['similarity'] > 70) {
+                        $totalSimilarity += $bestMatch['similarity'];
+                        $validSegments++;
 
-            foreach ($localSegments as $localSegment) {
-                $similarity = $this->calculateHybridSimilarity($joinedSegment, $localSegment);
+                        $result = [
+                            'document_id' => $documentId,
+                            'search_phrase' => $joinedSegment,
+                            'best_match' => $bestMatch['match'],
+                            'similarity_percentage' => $bestMatch['similarity'],
+                            'page_number' => $segment['page'] ?? 0,
+                        ];
 
-                if ($similarity > $highestSimilarity) {
-                    $highestSimilarity = $similarity;
-                    $bestMatch = implode(', ', $localSegment);
+                        $this->storeResultIfNotExists($result);
+                        $results[] = $result;
+                    }
                 }
             }
 
-            if ($highestSimilarity > 70) { // Seuil de similarité
-                $result = [
-                    'document_id' => $documentId,
-                    'search_phrase' => $joinedSegment, // Chaîne combinée
-                    'best_match' => $bestMatch,
-                    'similarity_percentage' => $highestSimilarity,
-                    'page_number' =>  $segment['page']?? 0, // Utiliser la page si disponible
-                ];
+            $averageSimilarity = $validSegments > 0 ? $totalSimilarity / $validSegments : 0;
 
-                $this->storeResultIfNotExists($result);
-                $results[] = $result;
-            }
+
+            return [
+                'success' => true,
+                'average_similarity' => $averageSimilarity,
+                'results' => $results,
+            ];
+        } catch (\Exception $th) {
+            Log::error('Error processing local segments: ' . $th->getMessage());
+            throw $th;
         }
-
-        return $results;
     }
 
 
     private function storeResultIfNotExists($result)
     {
-        if (!SimilataryResultLocal::where('document_id', $result['document_id'])
-            ->where('search_phrase', $result['search_phrase'])
-            ->exists()) {
-            SimilataryResultLocal::create($result);
+        try {
+            Log::info("Tentative de stockage du résultat", $result);
+
+            $existingResults = SimilataryResultLocal::where('document_id', $result['document_id'])
+                ->pluck('search_phrase')->toArray();
+
+            if (!in_array($result['search_phrase'], $existingResults)) {
+                SimilataryResultLocal::create($result);
+            }
+        } catch (\Exception $th) {
+            Log::error('Error storing result: ' . $th->getMessage());
         }
+    }
+
+
+    private function findBestMatch($joinedSegment, $localSegments)
+    {
+        $highestSimilarity = 0;
+        $bestMatch = null;
+
+        foreach ($localSegments as $localSegment) {
+            $similarity = $this->calculateHybridSimilarity($joinedSegment, $localSegment);
+
+            if ($similarity > $highestSimilarity) {
+                $highestSimilarity = $similarity;
+                $bestMatch = implode(', ', $localSegment);
+            }
+        }
+
+        return ['similarity' => $highestSimilarity, 'match' => $bestMatch];
     }
 
     private function prepareLocalSegments($localDocuments)
     {
-        $localSegments = [];
-
-        foreach ($localDocuments as $localDocument) {
-            $segments = $this->createSegments($localDocument->content);
-            $localSegments = array_merge($localSegments, $segments);
-        }
-
-        return $localSegments;
+        return collect($localDocuments)
+            ->flatMap(function ($doc) {
+                return $this->createSegments($doc->content);
+            })
+            ->filter(function ($segment) {
+                return is_array($segment) && isset($segment['text']) && strlen(trim($segment['text'])) >= 10;
+            })
+            ->toArray();
     }
 
-
-    private function searchLocalSegment($segment, $localSegments)
+    private function isResultValid($result)
     {
-        $highestSimilarity = 0;
-
-        foreach ($localSegments as $localText) {
-            // Ensure $localText is a string
-            if (is_array($localText)) {
-                $localText = $localText['content'] ?? ''; // Adjust key name based on your data structure
-            }
-
-            $cleanedLocalText = $this->cleanText($localText);
-
-            if (!is_string($cleanedLocalText) || strlen($cleanedLocalText) < 1) {
-                continue; // Skip invalid or empty cleaned texts
-            }
-
-            $similarity = $this->calculateHybridSimilarity($segment, $cleanedLocalText);
-
-            if ($similarity > $highestSimilarity) {
-                $highestSimilarity = $similarity;
+        $requiredKeys = ['document_id', 'search_phrase', 'best_match', 'similarity_percentage', 'page_number', 'highlighted_text'];
+        foreach ($requiredKeys as $key) {
+            if (!array_key_exists($key, $result)) {
+                return false;
             }
         }
-
-        return $highestSimilarity;
+        return true;
     }
 
+    protected function storeHighlightedText($documentId, $highlightedText, $averageSimilarity)
+    {
+        try {
+            // Enregistrer les informations dans la base de données
+            HighlightedText::create([
+                'document_id' => $documentId,
+                'highlighted_text' => $highlightedText,
+                'average_similarity' => $averageSimilarity,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'enregistrement du HighlightedText : " . $e->getMessage());
+        }
+    }
     private function extractTextFromDocument($document): bool|string
     {
         $path = public_path('storage/' . $document->path);
@@ -316,7 +335,7 @@ class PlagiarismController extends Controller
                     $phpWord = IOFactory::load($path);
                     foreach ($phpWord->getSections() as $section) {
                         foreach ($section->getElements() as $element) {
-                            if ($element instanceof \PhpOffice\PhpWord\Element\Text) {
+                            if ($element instanceof Text) {
                                 $text .= $element->getText() . ' ';
                             }
                         }
@@ -336,16 +355,13 @@ class PlagiarismController extends Controller
 
     private function cleanText($text)
     {
-        // Nettoyage du texte : suppression des numéros de section
-        $text = preg_replace('/\b\d+\.\s*/', '', $text); // Supprime les numéros sous forme de 1. ou 2.
-        $text = preg_replace('/\b(?:I{1,3}|IV|V|VI{0,3}|IX|X{1,3})\.\s*/', '', $text); // Supprime les numéros romains
-        $text = preg_replace('/\b(?:année académique|préambule|liste des tableaux|ENSEIGNEMENT SUPERIEUR ET UNIVERSITAIRE INSTITUT SUPERIEUR|défendu en vue de lobtention du|république démocratique du congo|chap|remerciements|introduction|chapitre|annexe|bibliographie|table|objectif général|forces et faiblesses de l’étude|dédicaces|table des matières|généralités sur le sujet|of\scontents)\b/i', '', $text); // Supprime les phrases non pertinentes
-
-        // Nettoyage du texte : suppression des caractères non pertinents
-        $text = preg_replace('/[^\p{L}\p{N}\s]/u', '', $text); // Enlève les caractères non pertinents, y compris les points
-        $text = preg_replace('/\s+/', ' ', $text); // Normalise les espaces
-        $text = trim($text); // Retire les espaces inutiles
-        $text = preg_replace('/^\s*\n/m', '', $text); // Enlève les lig
+        $text = preg_replace([
+            '/\b\d+\.\s*/', // Supprime les numéros sous forme de 1. ou 2.
+            '/\b(?:I{1,3}|IV|V|VI{0,3}|IX|X{1,3})\.\s*/', // Supprime les numéros romains
+            '/\b(?:année académique|préambule|liste des tableaux|ENSEIGNEMENT SUPERIEUR ET UNIVERSITAIRE INSTITUT SUPERIEUR|défendu en vue de lobtention du|république démocratique du congo|chap|remerciements|introduction|chapitre|annexe|bibliographie|table|objectif général|forces et faiblesses de l’étude|dédicaces|table des matières|généralités sur le sujet|of\scontents)\b/i', // Supprime les phrases non pertinentes
+            '/[^\p{L}\p{N}\s]/u', // Supprime les caractères non pertinents, y compris les points
+            '/\s+/', // Normalise les espaces
+        ], '', $text);
         return trim($text);
     }
 
@@ -378,7 +394,7 @@ class PlagiarismController extends Controller
 
         return $segments;
     }
-    private function splitSegment($segment, $maxLength = 2048)
+    private function splitSegment($segment, $maxLength = 200)
     {
         $chunks = [];
         if (strlen($segment) > $maxLength) {
@@ -407,7 +423,7 @@ class PlagiarismController extends Controller
     {
         foreach ($plagiarizedSegments as $segment) {
             $searchPhrase = preg_quote($segment['search_phrase'], '/');
-            $text = preg_replace("/\b($searchPhrase)\b/", '<span class="highlight">$1</span>', $text);
+            $text = preg_replace("/\b($searchPhrase)\b/", '<mark class="highlight transition ease-in-out delay-150  hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500 duration-300 ...">$1</mark>', $text);
         }
 
         return $text;

@@ -3,13 +3,14 @@
 namespace App\Jobs;
 
 use App\Models\Document;
-use App\Models\ProgressNotification;
-use App\Http\Controllers\PlagiarismController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\ProgressNotification;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use App\Http\Controllers\PlagiarismController;
 
 class ProcessFileJob implements ShouldQueue
 {
@@ -25,49 +26,45 @@ class ProcessFileJob implements ShouldQueue
     public function handle()
     {
         try {
-            // Créer une notification de progression initiale
+            if (!$this->document) {
+                throw new \Exception('Document non valide.');
+            }
+
             $notification = ProgressNotification::create([
                 'document_id' => $this->document->id,
                 'status' => 'En cours',
                 'progress' => 0,
             ]);
 
-            $this->updateProgress($notification, 25);
-            $this->detectPlagiarismApiSearch();
-            $this->updateProgress($notification, 50);
-            $this->detectPlagiarismLocal();
-            $this->updateProgress($notification, 100);
+            $notification->update(['progress' => 25]);
+            $plagiarismController = new PlagiarismController();
+            $resultLocales = $plagiarismController->detectLocal($this->document);
+            Log::info($resultLocales);
+
+            if ($resultLocales >= 50.0) {
+                $notification->update([
+                    'progress' => 100,
+                    'status' => 'Terminé',
+                ]);
+
+                return; // Arrête le processus si le résultat local est suffisant
+            }
+
+            $notification->update(['progress' => 50]);
+            $resultApi = $plagiarismController->detectApiSearch($this->document);
+
+            $notification->update([
+                'progress' => 100,
+                'status' => 'Terminé',
+            ]);
         } catch (\Exception $e) {
-            $this->handleError($e);
+            Log::error("Erreur dans le traitement du fichier : {$e->getMessage()}");
+
+            ProgressNotification::create([
+                'document_id' => $this->document->id ?? null,
+                'status' => 'Erreur',
+                'progress' => 0,
+            ]);
         }
-    }
-
-    protected function updateProgress($notification, $progress)
-    {
-        $notification->update(['progress' => $progress]);
-    }
-
-    protected function detectPlagiarismApiSearch()
-    {
-        $plagiarismController = new PlagiarismController();
-        $plagiarismController->detectApiSearch($this->document);
-    }
-
-    protected function detectPlagiarismLocal()
-    {
-        $plagiarismController = new PlagiarismController();
-        $plagiarismController->detectLocal($this->document);
-    }
-
-    protected function handleError(\Exception $e)
-    {
-        // Enregistrer l'erreur dans la base de données et dans les logs
-        ProgressNotification::create([
-            'document_id' => $this->document->id,
-            'status' => 'Erreur',
-            'progress' => 0,
-            'error_message' => $e->getMessage(),
-        ]);
-        Log::error("Error processing file: {$e->getMessage()}");
     }
 }

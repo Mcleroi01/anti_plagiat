@@ -481,8 +481,318 @@
     </div>
 
 
-    <script>
-        function highlightPlagiarizedText(text) {
+
+
+
+     <div class=" py-4 flex items-end">
+        <a href="#"
+            class="block mb-4 text-white bg-primary hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            type="button">
+            Attestation
+        </a>
+    </div>
+    <div class=" p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 sm:grid-cols-3 gap-10 mb-4">
+            @if (isset($averageSimilarity))
+                <div class="rounded overflow-hidden shadow-lg">
+                    <div class="">
+                        <div class=" bg-gray-50 dark:bg-gray-800 p-4 border-b-2 border-gray-200 dark:border-gray-700">
+                            <h1>Score humain</h1>
+                        </div>
+
+                        <div id="chart"></div>
+                    </div>
+                    <div class="px-6 py-4 flex flex-row items-center">
+                        <p class="dark:text-gray-200 text-gray-800 text-sm">
+                            Jcrify a détecté que <em
+                                class="text-xl font-bold text-blue-600">{{ round($averageSimilarity, 2) }}</em> % du
+                            texte soumis
+                            présente des similarités avec d'autres sources.
+                            Veuillez consulter ci-dessous la liste détaillée des cas de plagiat identifiés.
+                        </p>
+
+                    </div>
+
+                </div>
+            @else
+                <p class="dark:text-gray-200 text-gray-800">Aucun segment pertinent trouvé.</p>
+            @endif
+
+            <div class="rounded overflow-hidden shadow-lg">
+
+
+                <div class="">
+
+                    <div class=" bg-gray-50 dark:bg-gray-800 p-4 border-b-2 border-gray-200 dark:border-gray-700">
+                        <h1>Score Document Local</h1>
+                    </div>
+
+                    <div id="chart"></div>
+
+                </div>
+                <div class="px-6 py-4 flex flex-row items-center">
+                    <p class="dark:text-gray-200 text-gray-800 text-sm">
+                        Jcrify a détecté que <em class="text-xl font-bold text-blue-600"></em> % du
+                        texte soumis
+                        présente des similarités avec d'autres sources.
+                        Veuillez consulter ci-dessous la liste détaillée des cas de plagiat identifiés.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="rounded overflow-hidden shadow-lg">
+                <div class="">
+
+                    <div class=" bg-gray-50 dark:bg-gray-800 p-4 border-b-2 border-gray-200 dark:border-gray-700">
+                        <h1>Score Ai</h1>
+                    </div>
+
+                    <div id="chart" class=" p-4">Actuellement, aucun résultat de vérification du plagiat par
+                        intelligence artificielle n'est disponible. Cette fonctionnalité sera prochainement
+                        intégrée. Merci de votre patience.
+                    </div>
+                </div>
+                <div class="px-6 py-4 flex flex-row items-center">
+                    <p class="dark:text-gray-200 text-gray-800 text-sm">
+
+                    </p>
+                </div>
+            </div>
+        </div>
+
+
+        <div
+            class="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 gap-10 items-center dark:text-gray-200 text-gray-800">
+            <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
+                <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-styled-tab"
+                    data-tabs-toggle="#default-styled-tab-content"
+                    data-tabs-active-classes="text-purple-600 hover:text-purple-600 dark:text-purple-500 dark:hover:text-purple-500 border-purple-600 dark:border-purple-500"
+                    data-tabs-inactive-classes="dark:border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300"
+                    role="tablist">
+                    <li class="me-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 rounded-t-lg" id="profile-styled-tab"
+                            data-tabs-target="#styled-profile" type="button" role="tab" aria-controls="profile"
+                            aria-selected="false">Detail Score Humains</button>
+                    </li>
+                    <li class="me-2" role="presentation">
+                        <button
+                            class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                            id="dashboard-styled-tab" data-tabs-target="#styled-dashboard" type="button" role="tab"
+                            aria-controls="dashboard" aria-selected="false">Dashboard</button>
+                    </li>
+                    <li class="me-2" role="presentation">
+                        <button
+                            class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                            id="settings-styled-tab" data-tabs-target="#styled-settings" type="button" role="tab"
+                            aria-controls="settings" aria-selected="false">Settings</button>
+                    </li>
+
+                </ul>
+            </div>
+            <div id="default-styled-tab-content">
+                <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="styled-profile" role="tabpanel"
+                    aria-labelledby="profile-tab">
+                    @if (!empty($text))
+                        <div>
+                            <h1 class="block mb-2 text-xl font-semibold dark:text-gray-200 text-gray-800">Votre texte
+                                soumis</h1>
+                            <div
+                                class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-md p-4">
+                                <p> {{ substr($text, 0, 1000) }} ...</p>
+                            </div>
+                        </div>
+                    @endif
+                    @if (!empty($searchResults))
+
+                        <table id="search-table" class="w-full text-sm text-left rtl:text-right text-gray-200">
+                            <thead
+                                class="text-xs  uppercase bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Extrait Résultat</th>
+                                    <th scope="col" class="px-6 py-3">Similarité Calculée</th>
+                                    <th scope="col" class="px-6 py-3">Lien Résultat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($document->searchResults as $result)
+                                    <tr
+                                        class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
+                                        <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">
+                                            {{ substr($result->result_snippet, 0, 20) }}...</th>
+                                        <td class="px-6 py-4">{{ $result->similarity_calculated }}%</td>
+                                        <td class="px-6 py-4">
+                                            <a href="{{ $result->result_link }}" class="text-blue-500 hover:underline"
+                                                target="_blank">
+                                                {{ substr($result->result_link, 0, 30) }} ...
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+
+                    @endif
+
+                </div>
+
+                <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="styled-dashboard" role="tabpanel"
+                    aria-labelledby="dashboard-tab">
+                    @if (!empty($text))
+                        <div>
+                            <h1 class="block mb-2 text-xl font-semibold dark:text-gray-200 text-gray-800">Votre texte
+                                soumis</h1>
+                            <div
+                                class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-md p-4">
+                                <p> {{ substr($text, 0, 1000) }} ...</p>
+                            </div>
+                        </div>
+                    @endif
+                    @if (!empty($searchResults))
+
+                        <table id="search-table" class="w-full text-sm text-left rtl:text-right text-gray-200">
+                            <thead
+                                class="text-xs  uppercase bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Extrait Résultat</th>
+                                    <th scope="col" class="px-6 py-3">Similarité Calculée</th>
+                                    <th scope="col" class="px-6 py-3">Lien Résultat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($document->searchResults as $result)
+                                    <tr
+                                        class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
+                                        <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">
+                                            {{ substr($result->result_snippet, 0, 20) }}...</th>
+                                        <td class="px-6 py-4">{{ $result->similarity_calculated }}%</td>
+                                        <td class="px-6 py-4">
+                                            <a href="{{ $result->result_link }}"
+                                                class="text-blue-500 hover:underline" target="_blank">
+                                                {{ substr($result->result_link, 0, 30) }} ...
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+
+                    @endif
+
+                </div>
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+    @section('script')
+        <script>
+            if (document.getElementById("search-table") && typeof simpleDatatables.DataTable !== 'undefined') {
+                const dataTable = new simpleDatatables.DataTable("#search-table", {
+                    searchable: true,
+                    sortable: true
+                });
+            }
+        </script>
+
+        @if (isset($averageSimilarity))
+            <script>
+                const getChartOptions = () => {
+                    return {
+                        series: [@json($averageSimilarity)], // Utilisation de la variable averageSimilarity
+                        colors: ["#1C64F2"], // Couleur du graphique
+                        chart: {
+                            height: "380px",
+                            width: "100%",
+                            type: "radialBar",
+                            sparkline: {
+                                enabled: true,
+                            },
+                        },
+                        stroke: {
+                            colors: ["transparent"],
+                            lineCap: "round", // Utilisation de 'round' pour les extrémités de la barre radiale
+                        },
+                        plotOptions: {
+                            radialBar: {
+                                track: {
+                                    background: '#E5E7EB',
+                                },
+                                dataLabels: {
+                                    show: false,
+                                },
+                                hollow: {
+                                    margin: 0,
+                                    size: "32%",
+                                },
+                                donut: {
+                                    labels: {
+                                        show: true,
+                                        name: {
+                                            show: true,
+                                            fontFamily: "Inter, sans-serif",
+                                            offsetY: 20,
+                                        },
+                                        value: {
+                                            show: true,
+                                            fontFamily: "Inter, sans-serif",
+                                            offsetY: -20,
+                                            formatter: function(value) {
+                                                return value + "%"; // Afficher la valeur brute avec le symbole %
+                                            },
+                                        },
+                                    },
+                                    size: "70%",
+                                },
+                            },
+                        },
+                        grid: {
+                            show: false,
+                            strokeDashArray: 4,
+                            padding: {
+                                left: 2,
+                                right: 2,
+                                top: -23,
+                                bottom: -20,
+                            },
+                        },
+                        labels: ["Similitude moyenne"], // Étiquette pour la série de données
+                        dataLabels: {
+                            enabled: false,
+                        },
+                        legend: {
+                            show: false, // Désactiver la légende car il n'y a qu'une seule série
+                            position: "bottom",
+                            fontFamily: "Inter, sans-serif",
+                        },
+                        tooltip: {
+                            enabled: true,
+                            x: {
+                                show: false,
+                            },
+                        },
+                        yaxis: {
+                            show: false,
+                        }
+                    }
+                }
+
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const options = getChartOptions();
+                    const chart = new ApexCharts(document.querySelector("#chart"), options);
+                    chart.render();
+                });
+            </script>
+        @endif
+
+        <script>
+            function highlightPlagiarizedText(text) {
                 // Supposons que la fonction detectPlagiarism retourne le texte plagé en rouge
                 // et le reste en noir.
                 const regex = /plagiarized_text_pattern/g; // Remplacez par un vrai motif de texte plagé
@@ -504,4 +814,6 @@
                     sortable: true
                 });
             }
-    </script>
+        </script>
+    @endsection
+   

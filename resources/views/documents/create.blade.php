@@ -44,12 +44,14 @@
             <div
                 class="absolute top-0 left-0 h-24 w-24 rounded-full border-t-8 border-b-8 border-blue-500 animate-spin">
             </div>
-        </div>
-    </div>
 
-    <div id="progress-container" class="hidden">
-        <div class="progress-bar bg-blue-500 h-4" id="progress-bar" style="width: 0%;"></div>
-        <p id="progress-status">En attente...</p>
+            <div class="absolute top-0 left-0 text-white">
+                <p id="progress-bar"></p>
+                <p id="progress-status"></p>
+            </div>
+        </div>
+
+
     </div>
 
     @section('script')
@@ -76,12 +78,13 @@
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                             }
+
                         })
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
                                 monitorProgress(data
-                                .document_id); // Démarrer la surveillance de la progression
+                                    .document_id,data.document_show);
                             } else {
                                 throw new Error(data.message || 'Erreur lors du téléchargement');
                             }
@@ -97,14 +100,20 @@
                         });
                 });
 
-                function monitorProgress(documentId) {
+                function monitorProgress(documentId,documentshow) {
                     const interval = setInterval(() => {
                         fetch(`/api/progress/${documentId}`)
-                            .then(response => response.json())
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(
+                                        'Erreur réseau lors de la récupération de la progression.');
+                                }
+                                return response.json();
+                            })
                             .then(data => {
                                 if (data.progress !== undefined) {
                                     progressBar.style.width = `${data.progress}%`;
-                                    progressStatus.textContent = `Progression: ${data.progress}%`;
+                                    progressStatus.textContent = `Progression : ${data.progress}%`;
 
                                     if (data.progress >= 100) {
                                         clearInterval(interval);
@@ -112,16 +121,30 @@
                                             icon: 'success',
                                             title: 'Terminé',
                                             text: 'Le traitement est terminé.',
+                                            confirmButtonText: 'Voir les détails',
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                window.location.href = `/documents/${documentshow}`;
+                                            }
                                         });
+
+                                        progressContainer.classList.add('hidden');
                                     }
+
                                 }
                             })
                             .catch(error => {
                                 console.error('Erreur de progression:', error);
                                 clearInterval(interval);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erreur',
+                                    text: 'Impossible de suivre la progression.',
+                                });
                             });
-                    }, 1000); // Vérifie la progression toutes les secondes
+                    }, 1000); // Vérifie toutes les secondes
                 }
+
             });
         </script>
 

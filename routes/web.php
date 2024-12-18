@@ -14,7 +14,9 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PlagiarismController;
 use App\Http\Controllers\GoogleLoginController;
 use App\Http\Controllers\DocumentsLocalController;
+use App\Http\Controllers\ProgressNotificationController;
 use App\Http\Controllers\RolePermissionController;
+use App\Models\ProgressNotification;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -30,7 +32,7 @@ Route::get('/dashboard', function () {
     $credits = Credit::where('user_id', $user1->id)->get();
     $data = User::selectRaw("date_format(created_at, '%Y-%m-%d') as date, count(*) as aggregate")
         ->whereHas('roles', function ($query) {
-            $query->where('name', 'user'); // Filtrer par le rôle 'user'
+            $query->where('name', 'user');
         })
         ->whereDate('created_at', '>=', now()->subDays(30))
         ->groupBy('date')
@@ -46,6 +48,8 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('/notifications',[ProgressNotificationController::class, 'index']);
 
     Route::get('/api/progress/{document}', [DocumentController::class, 'checkBatchProgress']);
 
@@ -69,9 +73,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/plagiasme/results', [DocumentController::class, 'showResults'])->name('document.results');
     Route::get('/documents/upload', [DocumentController::class, 'create'])->name('documents.create');
-    Route::get('/documents/show/{document}', [DocumentController::class, 'show'])->name('documents.show');
+    Route::get('/documents/{document:_id}', [DocumentController::class, 'show'])->name('documents.show');
 
-    Route::get('/documents/index', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/{document}/detect-plagiarism', [PlagiarismController::class, 'detect'])->name('documents.detect-plagiarism');
     Route::post('/documents/upload', [DocumentController::class, 'upload'])->name('documents.upload');
 });

@@ -40,7 +40,10 @@
 </head>
 <body>
     <header>
-        <h1>Attestation d'Analyse de Plagiat</h1>
+        <em>République Démocratique du Congo</em>
+        <p>MINISTERE DE L’ENSEIGNEMENT SUPÉRIEUR ET UNIVERSITAIRE</p>
+        <h2>INSTITUT SUPERIEUR PEDAGOGIQUE DE LA GOMBE <p>B.P.3580-Kinshasa/Gombe</p> </h2>
+        <h1></h1>
         <p>Date : {{ now()->format('d/m/Y') }}</p>
     </header>
 
