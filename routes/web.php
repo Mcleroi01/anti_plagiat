@@ -1,17 +1,22 @@
 <?php
 
+use App\Models\User;
+use App\Models\Credit;
+use App\Models\Document;
+use App\Models\DocumentsLocal;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\PlagiarismController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CreditController;
-use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\PlagiarismController;
 use App\Http\Controllers\GoogleLoginController;
-use App\Models\User;
-use App\Models\Document;
-use App\Models\Credit;
+use App\Http\Controllers\DocumentsLocalController;
+use App\Http\Controllers\ProgressNotificationController;
+use App\Http\Controllers\RolePermissionController;
+use App\Models\ProgressNotification;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -20,14 +25,14 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     $user = User::all();
     $usersWithUserRole = User::role('user')->get();
-    $user1 = auth()->user();
+    $user1 = Auth::user();
 
     // Récupérer les documents appartenant à cet utilisateur
     $documents = Document::where('user_id', $user1->id)->get();
     $credits = Credit::where('user_id', $user1->id)->get();
     $data = User::selectRaw("date_format(created_at, '%Y-%m-%d') as date, count(*) as aggregate")
         ->whereHas('roles', function ($query) {
-            $query->where('name', 'user'); // Filtrer par le rôle 'user'
+            $query->where('name', 'user');
         })
         ->whereDate('created_at', '>=', now()->subDays(30))
         ->groupBy('date')
@@ -43,6 +48,14 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('/notifications',[ProgressNotificationController::class, 'index']);
+
+    Route::get('/api/progress/{document}', [DocumentController::class, 'checkBatchProgress']);
+
+    Route::get('/document/local/', [DocumentsLocalController::class, 'index'])->name('documents_local.index');
+    Route::post('/document/local/create', [DocumentsLocalController::class, 'upload'])->name('documents_local.upload');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -71,9 +84,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/plagiasme/results', [DocumentController::class, 'showResults'])->name('document.results');
     Route::get('/documents/upload', [DocumentController::class, 'create'])->name('documents.create');
-    Route::get('/documents/show/{document}', [DocumentController::class, 'show'])->name('documents.show');
+    Route::get('/documents/{document:_id}', [DocumentController::class, 'show'])->name('documents.show');
 
-    Route::get('/documents/index', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/{document}/detect-plagiarism', [PlagiarismController::class, 'detect'])->name('documents.detect-plagiarism');
     Route::post('/documents/upload', [DocumentController::class, 'upload'])->name('documents.upload');
 });

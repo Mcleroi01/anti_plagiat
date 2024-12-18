@@ -10,6 +10,7 @@ class RolesAndPermissionsSeeder extends Seeder
 {
     public function run()
     {
+
         // Créer les permissions
         $permissions = [
             // Permissions pour le super administrateur
@@ -47,6 +48,19 @@ class RolesAndPermissionsSeeder extends Seeder
         $superAdminRole = Role::firstOrCreate(['name' => 'superadmin']);
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $userRole = Role::firstOrCreate(['name' => 'user']);
+
+        
+        Permission::create(['name' => 'manage credits']);
+        Permission::create(['name' => 'view reports']);
+
+        
+        $superAdminRole = Role::create(['name' => 'super-admin']);
+        $userRole = Role::create(['name' => 'user']);
+
+        $superAdminRole->givePermissionTo(['manage credits', 'view reports']);
+    }
+}
+
 
         // Assigner les permissions aux rôles
         $superAdminRole->givePermissionTo(Permission::all());

@@ -64,7 +64,8 @@
                     <li class="relative" x-data="{ dropdownOpen: false, notifying: true }"
                         @click.outside="dropdownOpen = false">
                         <a class="relative flex h-8.5 w-8.5 items-center justify-center rounded-full border-[0.5px] border-stroke bg-gray hover:text-primary dark:border-strokedark dark:bg-meta-4 dark:text-white"
-                            href="#" @click.prevent="dropdownOpen = ! dropdownOpen; notifying = false">
+                            href="#" @click.prevent="dropdownOpen = ! dropdownOpen; notifying = false"
+                            id="notification">
                             <span :class="!notifying && 'hidden'"
                                 class="absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-meta-1">
                                 <span
@@ -86,56 +87,8 @@
                                 <h5 class="text-sm font-medium text-bodydark2">Notification</h5>
                             </div>
 
-                            <ul class="flex h-auto flex-col overflow-y-auto">
-                                <li>
-                                    <a class="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                                        href="#">
-                                        <p class="text-sm">
-                                            <span class="text-black dark:text-white">Edit your information in a
-                                                swipe</span>
-                                            Sint occaecat cupidatat non proident, sunt in culpa qui
-                                            officia deserunt mollit anim.
-                                        </p>
+                            <ul class="flex h-auto flex-col overflow-y-auto" id="dropnotifications">
 
-                                        <p class="text-xs">12 May, 2025</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                                        href="#">
-                                        <p class="text-sm">
-                                            <span class="text-black dark:text-white">It is a long established
-                                                fact</span>
-                                            that a reader will be distracted by the readable.
-                                        </p>
-
-                                        <p class="text-xs">24 Feb, 2025</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                                        href="#">
-                                        <p class="text-sm">
-                                            <span class="text-black dark:text-white">There are many variations</span>
-                                            of passages of Lorem Ipsum available, but the majority have
-                                            suffered
-                                        </p>
-
-                                        <p class="text-xs">04 Jan, 2025</p>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                                        href="#">
-                                        <p class="text-sm">
-                                            <span class="text-black dark:text-white">There are many variations</span>
-                                            of passages of Lorem Ipsum available, but the majority have
-                                            suffered
-                                        </p>
-
-                                        <p class="text-xs">01 Dec, 2024</p>
-                                    </a>
-                                </li>
                             </ul>
                         </div>
                         <!-- Dropdown End -->
@@ -302,6 +255,7 @@
                     </button>
                 </a>
             </li>
+
             @if (Auth::user()->hasRole('superadmin'))
             <li>
                 <a class="" href="{{ route('users.index') }}">
@@ -348,6 +302,74 @@
                             <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2"
                                 d="M10 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h2m10 1a3 3 0 0 1-3 3m3-3a3 3 0 0 0-3-3m3 3h1m-4 3a3 3 0 0 1-3-3m3 3v1m-3-4a3 3 0 0 1 3-3m-3 3h-1m4-3v-1m-2.121 1.879-.707-.707m5.656 5.656-.707-.707m-4.242 0-.707.707m5.656-5.656-.707.707M12 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                         </svg>
+
+            @if (Auth::user()->hasRole('super-admin'))
+                <li>
+                    <a class="" href="{{ route('users.index') }}">
+                        <button
+                            class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('users.index') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
+                            type="button">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd"
+                                    d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 9a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-1a4 4 0 0 0-4-4h-4Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+
+                            <p
+                                class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
+                                Users</p>
+                        </button>
+                    </a>
+                </li>
+                <li>
+                    <a class="" href="{{ route('documents_local.index') }}">
+                        <button
+                            class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('documents_local.index') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
+                            type="button">
+                            <svg class="w-6 h-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd"
+                                    d="M11 4.717c-2.286-.58-4.16-.756-7.045-.71A1.99 1.99 0 0 0 2 6v11c0 1.133.934 2.022 2.044 2.007 2.759-.038 4.5.16 6.956.791V4.717Zm2 15.081c2.456-.631 4.198-.829 6.956-.791A2.013 2.013 0 0 0 22 16.999V6a1.99 1.99 0 0 0-1.955-1.993c-2.885-.046-4.76.13-7.045.71v15.081Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+
+
+                            <p
+                                class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
+                                Document Local</p>
+                        </button>
+                    </a>
+                </li>
+                <li>
+                    <a class="" href="#">
+                        <button
+                            class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize"
+                            type="button">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                aria-hidden="true" class="w-5 h-5 text-inherit">
+                                <path fill-rule="evenodd"
+                                    d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 01-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 11-7.48 0 24.585 24.585 0 01-4.831-1.244.75.75 0 01-.298-1.205A8.217 8.217 0 005.25 9.75V9zm4.502 8.9a2.25 2.25 0 104.496 0 25.057 25.057 0 01-4.496 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <p
+                                class="block antialiased font-sans text-base leading-relaxed text-inherit font-medium capitalize">
+                                notifactions</p>
+                        </button>
+                    </a>
+                </li>
+                <li>
+                    <a class="" href="{{ route('admin.roles-permissions') }}">
+                        <button
+                            class="middle none font-sans font-bold center transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 rounded-lg dark:text-gray-200 text-gray-800 hover:bg-white/10 active:bg-white/30 w-full flex items-center gap-4 px-4 capitalize {{ request()->routeIs('admin.roles-permissions') ? ' bg-gradient-to-tr from-blue-600 to-blue-400 dark:text-gray-200 text-gray-800' : 'dark:text-gray-200 text-gray-800' }}"
+                            type="button">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M10 19H5a1 1 0 0 1-1-1v-1a3 3 0 0 1 3-3h2m10 1a3 3 0 0 1-3 3m3-3a3 3 0 0 0-3-3m3 3h1m-4 3a3 3 0 0 1-3-3m3 3v1m-3-4a3 3 0 0 1 3-3m-3 3h-1m4-3v-1m-2.121 1.879-.707-.707m5.656 5.656-.707-.707m-4.242 0-.707.707m5.656-5.656-.707.707M12 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+
 
 
                         <p
@@ -408,3 +430,42 @@
         </ul>
     </div>
 </aside>
+
+</aside>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropdown = document.getElementById('notification');
+
+        dropdown.addEventListener('click', function() {
+            fetch('/notifications')
+                .then(response => response.json())
+                .then(response => {
+                    const notifications = document.getElementById('dropnotifications');
+                    notifications.innerHTML = '';
+
+                    if (response.error) {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<p class="text-sm text-red-500">${response.error}</p>`;
+                        notifications.appendChild(li);
+                        return;
+                    }
+
+                    response.forEach(notification => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                        <a class="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4" href="http://localhost:8000/documents/${notification.document._id}">
+                            <p class="text-sm">
+                                <span class="text-black dark:text-white">${notification.document.filename}</span>
+                            </p>
+                            <p class="text-xs">${new Date(notification.created_at).toLocaleString()}</p>
+                        </a>`;
+                        notifications.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+        });
+    });
+</script>
+

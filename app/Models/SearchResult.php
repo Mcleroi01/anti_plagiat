@@ -17,6 +17,7 @@ class SearchResult extends Model
         'similarity_calculated',
         'result_link',
         'global_similarity_calculated',
+        'page_number'
     ];
 
 

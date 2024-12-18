@@ -2,12 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
-use App\Http\Requests\StoreDocumentRequest;
-use App\Http\Requests\UpdateDocumentRequest;
 use App\Models\Credit;
+use App\Models\Document;
+use App\Jobs\ProcessFileJob;
 use App\Models\SearchResult;
 use Illuminate\Http\Request;
+use App\Services\CreditService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
+use App\Models\ProgressNotification;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\StoreDocumentRequest;
+use App\Http\Requests\UpdateDocumentRequest;
 
 class DocumentController extends Controller
 {
@@ -15,107 +21,99 @@ class DocumentController extends Controller
      * Display a listing of the resource.
      */
 
+    public function index()
+    {
+        $user = Auth::user();
+        $documents = Document::where('user_id', $user->id)->latest()->paginate(10);
+        return view('documents.index', compact('documents'));
+    }
+
     public function create()
     {
         return view('documents.create');
     }
+  
     public function upload(Request $request)
     {
-        try {
-            $request->validate([
-                'document' => 'required|mimes:pdf,doc,docx|max:2048',
-            ]);
+        $request->validate([
+            'document' => 'required|mimes:pdf,doc,docx,txt|max:10120',
+        ], [
+            'document.required' => 'Veuillez sélectionner un document à télécharger.',
+            'document.mimes' => 'Le document doit être au format PDF, DOC ou DOCX.',
+            'document.max' => 'La taille maximale du document est de 10 Mo.',
+        ]);
 
-            $user = auth()->user();
-            $credit = Credit::where('user_id', $user->id)->first();
+        $user = Auth::user();
 
-            if (!$credit || $credit->documents_uploaded >= $credit->monthly_limit) {
-                return redirect()->back()->with('error', 'Limite de documents atteinte pour ce mois.');
-            }
-
-            $file = $request->file('document');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('documents', $fileName, 'public');
-
-            $document = new Document();
-            $document->filename = $file->getClientOriginalName();
-            $document->path = $filePath;
-            $document->user_id = $user->id;
-            $document->save();
-
-            $plagiat = new PlagiarismController();
-            $result = $plagiat->detect($document);
-            $response = json_decode($result->getContent(), true);
-
-            $averageSimilarity = $response['average_similarity'];
-            $results = $response['results'];
-            $text = $response['text'];
-
-            $credit->increment('documents_uploaded');
-
-            return view('documents.create')
-                ->with('averageSimilarity', $averageSimilarity)
-                ->with('results', $results)
-                ->with('text', $text);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()->withErrors($e->validator)->withInput();
-        } catch (\Exception $th) {
-            return redirect()->back()->with('error', "Erreur lors du téléchargement du document: $th");
+        if (!CreditService::canUploadMoreDocuments($user->id)) {
+            return response()->json(['success' => false, 'message' => 'Limite de documents atteinte pour ce mois.'], 403);
         }
+
+        $file = $request->file('document');
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        $filePath = $file->storeAs('documents/' . $user->id, $fileName, 'public');
+
+        $document = Document::create([
+            'filename' => $file->getClientOriginalName(),
+            'path' => $filePath,
+            'user_id' => $user->id,
+        ]);
+
+        CreditService::incrementDocumentCount($user->id);
+
+        // Déclenche le job
+        ProcessFileJob::dispatch($document);
+
+        return response()->json([
+            'success' => true,
+            'document_id' => $document->id,
+            'document_show' => $document->_id,
+        ]);
+    }
+
+    public function show(Document $document)
+    {
+        $localResults = $document->similataryResultLocal;
+        $apiResults = $document->searchResults;
+        return view('documents.show', compact('document', 'localResults', 'apiResults'));
     }
 
 
 
-
-
-
-    public function show(Document $document)
+    public function checkBatchProgress($documentId)
     {
-       
+        $progress = ProgressNotification::where('document_id', $documentId)->value('progress');
+        return response()->json([
+            'progress' => $progress ?? 0,
+        ]);
+    }
+        public function showResults(Request $request)
+    {
+        $resultIds = $request->input('id'); 
+
+        if (is_array($resultIds)) {
+            $searchResults = SearchResult::whereIn('id', $resultIds)->get();
+        } else {
+            $searchResults = SearchResult::where('id', $resultIds)->get();
+        }
+        return view('documents.results', compact('searchResults'));
+    }
+
+    public function generatePlagiarismReport($documentId)
+    {
+
+        $document = Document::findOrFail($documentId);
+
         $searchResults = $document->searchResults;
 
         $singleResult = $document->searchResults->first();
 
         $averageSimilarity = $singleResult->avg('similarity_calculated');
-        
 
 
-
-        // Retourner la vue avec le document et les résultats de recherche
-        return view('documents.show', compact('document', 'searchResults', 'averageSimilarity'));
-    }
+        $pdf = Pdf::loadView('pdf.plagiarism_report', compact('document', 'searchResults', 'averageSimilarity'));
 
 
-    public function index()
-    {
-        // Récupérer l'utilisateur actuellement connecté
-        $user = auth()->user();
-
-        // Récupérer les documents appartenant à cet utilisateur
-        $documents = Document::where('user_id', $user->id)->get();
-
-        return view('documents.index', compact('documents'));
-    }
-
-
-
-
-
-    public function showResults(Request $request)
-    {
-        // Récupérer les IDs depuis la requête
-        $resultIds = $request->input('id'); // Si vous passez un tableau d'IDs via la route
-
-        // Vérifiez si $resultIds est un tableau
-        if (is_array($resultIds)) {
-            // Récupérer les résultats correspondants
-            $searchResults = SearchResult::whereIn('id', $resultIds)->get();
-        } else {
-            // Si ce n'est pas un tableau, récupérez un seul résultat
-            $searchResults = SearchResult::where('id', $resultIds)->get();
-        }
-
-        // Passer les résultats à la vue
-        return view('documents.results', compact('searchResults'));
+        return $pdf->download('attestation_analyse_' . $document->id . '.pdf');
     }
 }

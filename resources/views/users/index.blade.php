@@ -8,8 +8,8 @@
     @endif
 
 
-    <div class="relative overflow-x-auto">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-200" id="table">
+    <div class=" overflow-x-auto">
+        <table class="w-full text-sm text-left rtl:text-right text-gray-200" id="search-table">
             <thead
                 class="text-xs text-gray-300 uppercase bg-gradient-to-br from-gray-800 to-gray-900 dark:text-gray-400">
                 <tr>
