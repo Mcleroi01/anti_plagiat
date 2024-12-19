@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreDocumentRequest;
 use App\Http\Requests\UpdateDocumentRequest;
 
+
 class DocumentController extends Controller
 {
     /**
@@ -61,7 +62,6 @@ class DocumentController extends Controller
 
         CreditService::incrementDocumentCount($user->id);
 
-        // Déclenche le job
         ProcessFileJob::dispatch($document);
 
         return response()->json([
@@ -77,6 +77,25 @@ class DocumentController extends Controller
         $apiResults = $document->searchResults;
         return view('documents.show', compact('document', 'localResults', 'apiResults'));
     }
+
+    public function generatePDF(Document $document)
+    {
+        // Récupérer les résultats locaux et de l'API
+        $localResults = $document->similataryResultLocal;
+        $apiResults = $document->searchResults;
+
+        // Vérifier si les données existent
+        if (!$localResults && !$apiResults) {
+            return redirect()->back()->with('error', 'Aucun résultat trouvé pour ce document.');
+        }
+
+        // Générer le fichier PDF avec les données
+        $pdf = PDF::loadView('attestation.index', compact('localResults', 'apiResults', 'document'));
+
+        // Télécharger le fichier PDF
+        return $pdf->download('resultat-traitement.pdf');
+    }
+
 
 
 

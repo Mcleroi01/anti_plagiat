@@ -1,4 +1,4 @@
-@props(['localResults', 'document'])
+@props(['apiResults', 'document'])
 
 
 
@@ -19,7 +19,7 @@
         <div class="px-6 py-4 flex flex-row items-center">
             <p class="dark:text-gray-200 text-gray-800 text-sm">
                 Jcrify a détecté que <em
-                    class="text-xl font-bold text-blue-600">{{ round($localResults->avg('similarity_percentage'), 2) }}</em>
+                    class="text-xl font-bold text-blue-600">{{ round($apiResults->avg('similarity_percentage'), 2) }}</em>
                 %
                 du texte soumis
                 présente des similarités avec d'autres sources.
@@ -132,14 +132,19 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($localResults as $result)
+            @foreach ($apiResults as $result)
                 <tr
                     class="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200 text-gray-800">
                     <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">
                         {{ substr($result->search_phrase, 0, 50) }}</th>
-                    <td class="px-6 py-4">{{ $result->similarity_percentage }}%</td>
+                    <td class="px-6 py-4">{{ $result->similarity_calculated }}%</td>
                     <td class="px-6 py-4">{{ $result->page_number }}</td>
-                    <td class="px-6 py-4">{{ substr($result->best_match, 0, 50) }}</td>
+                    <td class="px-6 py-4">{{ substr($result->result_snippet, 0, 50) }}</td>
+                    <td class="px-6 py-4">
+                        <a href="{{ $result->result_link }}" class="text-blue-500 hover:underline" target="_blank">
+                            {{ substr($result->result_link, 0, 30) }} ...
+                        </a>
+                    </td>
                 </tr>
             @endforeach
         </tbody>

@@ -30,7 +30,7 @@ class ProgressNotificationController extends Controller
             ->latest() 
             ->get();
 
-            // Retourner les notifications avec les documents inclus
+           
             return response()->json($notifications);
         } catch (\Exception $e) {
             Log::error('Notification fetch error: ', ['error' => $e->getMessage()]);

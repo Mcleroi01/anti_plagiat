@@ -49,6 +49,8 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth')->group(function () {
 
+    Route::get('/generate-pdf/{document:_id}', [DocumentController::class, 'generatePDF'])->name('generate.pdf');
+
     Route::get('/notifications',[ProgressNotificationController::class, 'index']);
 
     Route::get('/api/progress/{document}', [DocumentController::class, 'checkBatchProgress']);

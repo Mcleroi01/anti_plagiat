@@ -59,22 +59,21 @@ class PlagiarismController extends Controller
         $totalSegments = 0;
         $resultsToStore = [];
 
-        foreach ($segments as  $segment) {
-
+        foreach ($segments as $segment) {
             if (is_array($segment) && isset($segment['text'])) {
-                $segmentText = $segment['text'];
+                $segmentText = trim($segment['text']);
 
-                // Ignorez les segments trop courts
-                if (strlen(trim($segmentText)) < 10) {
-
+                // Ignorez les segments trop courts ou vides
+                if (empty($segmentText) || strlen($segmentText) < 10) {
+                    Log::info("Segment ignoré (trop court ou vide) : " . var_export($segment, true));
                     continue;
                 }
 
                 // Découpez le segment si nécessaire
-                $splitSegments = $this->splitSegment(trim($segmentText), 300);
+                $splitSegments = $this->splitSegment($segmentText, 300);
 
                 foreach ($splitSegments as $splitSegment) {
-
+                    Log::info("Segment à rechercher : " . $splitSegment); // Ajout d'un log pour le segment à rechercher
 
                     $searchResults = $this->searchSegment($splitSegment);
 
@@ -83,7 +82,6 @@ class PlagiarismController extends Controller
                         $snippetNormalized = strtolower(trim($searchResults['organic'][0]['snippet']));
                         // Calculer la similarité
                         $similarity = $this->calculateHybridSimilarity($segmentNormalized, $snippetNormalized);
-
 
                         if ($similarity >= 10) {
                             $totalSimilarity += $similarity;
@@ -98,16 +96,15 @@ class PlagiarismController extends Controller
                                 'result_link' => $searchResults['organic'][0]['link'],
                                 'page_number' => $segment['page'] ?? 0,
                             ];
-                        } else {
                         }
                     } else {
+                        Log::warning("Aucun résultat trouvé pour le segment : " . $splitSegment);
                     }
                 }
             } else {
                 Log::warning("Le segment n'est pas valide : " . var_export($segment, true));
             }
         }
-
 
         $averageSimilarity = $totalSegments > 0 ? $totalSimilarity / $totalSegments : 0;
 
@@ -128,19 +125,21 @@ class PlagiarismController extends Controller
         ];
     }
 
+
     private function searchSegment($segment)
     {
+        if (empty(trim($segment))) {
+            Log::error('Segment vide ignoré.');
+            return null;
+        }
+
         $client = new Client();
         $headers = [
             'X-API-KEY' => 'c9af7b520b092b3bce8fc4d9a4de9a9589af3fe2',
             'Content-Type' => 'application/json',
-
         ];
 
-        $body = json_encode([
-            'q' => $segment,
-            "hl" => "fr"
-        ]);
+        $body = json_encode(['q' => $segment, 'hl' => 'fr']);
 
         try {
             $response = $client->post('https://google.serper.dev/search', [
@@ -149,16 +148,18 @@ class PlagiarismController extends Controller
                 'verify' => false,
             ]);
 
-
+            if ($response->getStatusCode() !== 200) {
+                throw new \Exception('Erreur HTTP : ' . $response->getStatusCode());
+            }
 
             return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
             Log::error('Erreur lors de la recherche : ' . $e->getMessage());
-            return [
-                'error' => 'Erreur lors de la recherche : ' . $e->getMessage(),
-            ];
+            return null;
         }
     }
+
+
 
     public function detectLocal(Document $document)
     {
@@ -204,12 +205,19 @@ class PlagiarismController extends Controller
                 if (is_array($segment) && isset($segment['text'])) {
                     $segmentText = trim($segment['text']);
 
+                    // Vérifiez si le segment est vide ou trop court
                     if (empty($segmentText) || strlen($segmentText) < 10) {
                         continue;
                     }
 
-                    $splitSegments = $this->splitSegment($segmentText, 300);
+                    $splitSegments = $this->splitSegment($segmentText, 2048);
                     $joinedSegment = implode(' ', $splitSegments);
+
+                    
+                    if (empty($joinedSegment)) {
+                        Log::warning("Le segment joint est vide, impossible de trouver une correspondance.");
+                        continue;
+                    }
 
                     $bestMatch = $this->findBestMatch($joinedSegment, $localSegments);
 
@@ -233,7 +241,6 @@ class PlagiarismController extends Controller
             }
 
             $averageSimilarity = $validSegments > 0 ? $totalSimilarity / $validSegments : 0;
-
 
             return [
                 'success' => true,
@@ -326,25 +333,40 @@ class PlagiarismController extends Controller
         try {
             switch ($extension) {
                 case 'pdf':
-                    $parser = new Parser();
-                    $pdf = $parser->parseFile($path);
-                    $text = $pdf->getText();
-                    break;
+                    try {
+                        $parser = new Parser();
+                        $pdf = $parser->parseFile($path);
+                        $text = $pdf->getText();
+                        break;
+                    } catch (\Exception $th) {
+                        Log::error("Erreur lors de la lecture du PDF pour le document ID " . $document->id . ": " . $th->getMessage());
+                    }
+                   
 
                 case 'docx':
-                    $phpWord = IOFactory::load($path);
-                    foreach ($phpWord->getSections() as $section) {
-                        foreach ($section->getElements() as $element) {
-                            if ($element instanceof Text) {
-                                $text .= $element->getText() . ' ';
+                    try {
+                        $phpWord = IOFactory::load($path);
+                        foreach ($phpWord->getSections() as $section) {
+                            foreach ($section->getElements() as $element) {
+                                if ($element instanceof Text) {
+                                    $text .= $element->getText() . ' ';
+                                }
                             }
                         }
+                        break;
+                    } catch (\Exception $th) {
+                        Log::error("Erreur lors de la lecture du DOCX pour le document ID " . $document->id . ": " . $th->getMessage());
                     }
-                    break;
+                    
 
                 case 'txt':
-                    $text = file_get_contents($path);
-                    break;
+                    try {
+                        $text = file_get_contents($path);
+                        break;
+                    } catch (\Exception $th) {
+                        Log::error("Erreur lors de la lecture du DOCX pour le document ID " . $document->id . ": " . $th->getMessage());
+                    }
+                    
             }
         } catch (\Exception $e) {
             Log::error("Erreur lors de l'extraction du texte pour le document ID " . $document->id . ": " . $e->getMessage());
@@ -356,44 +378,49 @@ class PlagiarismController extends Controller
     private function cleanText($text)
     {
         $text = preg_replace([
-            '/\b\d+\.\s*/', // Supprime les numéros sous forme de 1. ou 2.
-            '/\b(?:I{1,3}|IV|V|VI{0,3}|IX|X{1,3})\.\s*/', // Supprime les numéros romains
-            '/\b(?:année académique|préambule|liste des tableaux|ENSEIGNEMENT SUPERIEUR ET UNIVERSITAIRE INSTITUT SUPERIEUR|défendu en vue de lobtention du|république démocratique du congo|chap|remerciements|introduction|chapitre|annexe|bibliographie|table|objectif général|forces et faiblesses de l’étude|dédicaces|table des matières|généralités sur le sujet|of\scontents)\b/i', // Supprime les phrases non pertinentes
-            '/[^\p{L}\p{N}\s]/u', // Supprime les caractères non pertinents, y compris les points
-            '/\s+/', // Normalise les espaces
-        ], '', $text);
+            '/\b\d+\.\s*/', // Numéros de liste
+            '/\b(?:[IVXLCDM]+\.)\s*/i', // Numéros romains
+            '/\b(année académique|préambule|liste des tableaux|introduction|annexe|bibliographie)\b/i', // Phrases non pertinentes
+            '/[^a-zA-Z0-9\sàéèêëùûüç]/u', // Supprime caractères non pertinents
+            '/\s+/', // Normalisation des espaces multiples
+        ], ' ', $text);
         return trim($text);
     }
 
-    private function createSegments(string $text, int $wordsPerSegment = 300, int $wordsPerPage = 300): array
+    private function createSegments(string $text, int $wordsPerSegment = 300, int $maxSegmentLength = 500): array
     {
         $words = explode(' ', $text);
         $segments = [];
         $currentSegment = [];
-        $currentPage = 1;
         $currentWordCount = 0;
 
         foreach ($words as $word) {
             $currentSegment[] = $word;
             $currentWordCount++;
 
-            if (count($currentSegment) >= $wordsPerSegment) {
-                $segments[] = ['text' => implode(' ', $currentSegment), 'page' => $currentPage];
+            if ($currentWordCount >= $wordsPerSegment) {
+                $segmentText = implode(' ', $currentSegment);
+                if (strlen($segmentText) > $maxSegmentLength) {
+                    $segmentText = wordwrap($segmentText, $maxSegmentLength, "\n", true);
+                    foreach (explode("\n", $segmentText) as $chunk) {
+                        $segments[] = ['text' => trim($chunk)];
+                    }
+                } else {
+                    $segments[] = ['text' => trim($segmentText)];
+                }
                 $currentSegment = [];
-            }
-
-            if ($currentWordCount >= $wordsPerPage) {
-                $currentPage++;
                 $currentWordCount = 0;
             }
         }
 
         if (!empty($currentSegment)) {
-            $segments[] = ['text' => implode(' ', $currentSegment), 'page' => $currentPage];
+            $segmentText = implode(' ', $currentSegment);
+            $segments[] = ['text' => trim($segmentText)];
         }
 
         return $segments;
     }
+
     private function splitSegment($segment, $maxLength = 200)
     {
         $chunks = [];

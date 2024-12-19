@@ -39,15 +39,18 @@ class ProcessFileJob implements ShouldQueue
             $notification->update(['progress' => 25]);
             $plagiarismController = new PlagiarismController();
             $resultLocales = $plagiarismController->detectLocal($this->document);
-            Log::info($resultLocales);
 
-            if ($resultLocales >= 50.0) {
+            if (!is_numeric($resultLocales['average_similarity'])) {
+                throw new \InvalidArgumentException("La valeur de \$resultLocales doit être un nombre.");
+            }
+
+            if ($resultLocales['average_similarity'] >= 50.0) {
                 $notification->update([
                     'progress' => 100,
                     'status' => 'Terminé',
                 ]);
 
-                return; // Arrête le processus si le résultat local est suffisant
+                return;
             }
 
             $notification->update(['progress' => 50]);

@@ -8,6 +8,11 @@
 
 
     <div class="container">
+
+        <div class=" py-5 items-end">
+            <a href="{{route('generate.pdf',$document->_id)}}"
+                class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Attestation</a>
+        </div>
         
         @if ($localResults->isEmpty())
             
@@ -19,18 +24,7 @@
         @if ($apiResults->isEmpty())
            
         @else
-            <ul>
-                @foreach ($apiResults as $result)
-                    <li>
-                        <strong>{{ $result->search_phrase }}</strong> -
-                        Extrait de résultat : {{ $result->result_snippet }},
-                        Similarité calculée : {{ $result->similarity_calculated }}%
-                        (Lien : <a href="{{ $result->result_link }}" target="_blank">Voir le détail</a>)
-                        ,
-                        Similarité globale calculée : {{ $result->global_similarity_calculated }}
-                    </li>
-                @endforeach
-            </ul>
+          <x-resultApi :apiResults="$apiResults" :document="$document" />
         @endif
     </div>
 
@@ -49,7 +43,7 @@
 
             const getChartOptions = () => {
                 return {
-                    series: [@json($localResults->avg('similarity_percentage'))], // Utilisation de la variable averageSimilarity
+                    series: [@json($document->highlightedText->average_similarity)], // Utilisation de la variable averageSimilarity
                     colors: ["#1C64F2"], // Couleur du graphique
                     chart: {
                         height: "380px",
